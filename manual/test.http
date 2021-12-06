@@ -1,0 +1,6 @@
+// config
+@endorserApiUrl = http://localhost:3000/endorser/api
+
+### POST developer
+POST {{endorserApiUrl}}/developer
+Accept: application/json
