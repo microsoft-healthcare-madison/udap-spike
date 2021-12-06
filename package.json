@@ -26,6 +26,7 @@
   "dependencies": {
     "@types/fhir": "^0.0.34",
     "cross-fetch": "^3.1.4",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "jose": "^4.3.7"
   }
 }
