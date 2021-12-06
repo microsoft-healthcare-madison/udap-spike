@@ -13,20 +13,16 @@ export default async function create(
   certificatePath: string,
   keyPath: string
 ): Promise<Signer> {
+
   const certificatePEM = fs.readFileSync(certificatePath).toString();
-
   const certificateDER = certificatePEM.split("\n").slice(1, -2).join("");
-  console.log("Read cert", certificatePEM, certificateDER);
-
   const certificate = await jose.importX509(certificatePEM, "RS256");
-  console.log("Imported as", certificate);
 
   const privateKeyPEM = fs
     .readFileSync(keyPath)
     .toString();
 
   const privateKey = await jose.importPKCS8(privateKeyPEM, "RS256");
-  console.log("Imported as", privateKey);
 
   const publicJwk = {
     ...(await jose.exportJWK(certificate)),
@@ -43,6 +39,10 @@ export default async function create(
         .setProtectedHeader({ alg: "RS256" })
         .setIssuedAt()
         .setExpirationTime("3 years")
+        .setProtectedHeader({
+          "alg": "RS256",
+          "x5c": publicJwk.x5c
+        })
         .sign(privateKey);
 
       return jwt;

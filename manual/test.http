@@ -30,7 +30,6 @@ GET {{endorserApiUrl}}/developer/{{developerId}}
 
 ### DELETE - Developer by ID
 # @name deleteDeveloper
-@developerId = {{createDeveloper.response.body.id}}
 DELETE {{endorserApiUrl}}/developer/{{developerId}}
 
 
@@ -43,10 +42,13 @@ Content-Type: application/json
 {
   "sub": "https://mysub.example.com",
   "client_name": "The best health app available",
-  "redirect_uris": ["https://mysub.example.com/redirect", "mysub://"]
+  "redirect_uris": ["https://mysub.example.com/redirect", "mysub://redirect"]
 }
 
-### GET an endorsement for th eapp
+### Extract result from POST
+@appId = {{createApp.response.body.id}}
 
-GET {{endorserApiUrl}}/developer/{{developerId}}/app/2705299/endorsement
+### GET an endorsement for the app
+
+GET {{endorserApiUrl}}/developer/{{developerId}}/app/{{appId}}/endorsement
 
