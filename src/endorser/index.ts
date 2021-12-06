@@ -197,7 +197,6 @@ router.post("/api/developer/:developerId/app", async (req, res, err) => {
 });
 
 const fixturesPath = path.join(__dirname, "..", "..", "fixtures");
-
 const signer = createSigner(
   config.iss,
   path.join(fixturesPath, "endorser.crt"),

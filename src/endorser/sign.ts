@@ -1,4 +1,4 @@
-import jose from "jose";
+import * as jose from "jose";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -22,9 +22,7 @@ export default async function create(
   console.log("Imported as", certificate);
 
   const privateKeyPEM = fs
-    .readFileSync(
-      path.join(__dirname, "..", "fixtures", "endorser.private.key")
-    )
+    .readFileSync(keyPath)
     .toString();
 
   const privateKey = await jose.importPKCS8(privateKeyPEM, "RS256");
