@@ -1,10 +1,8 @@
 import express from "express";
+import fhir4 from "fhir/r4";
 import path from "path";
 
-import fetch from "cross-fetch";
-import r4 from "fhir/r4";
-
-import {ApiHelper} from "./ApiHelper";
+import {ApiHelper,ApiResponse} from "./ApiHelper";
 
 const ENDORSER_FHIR_BASE =
   process.env.ENDORSER_FHIR_BASE || "https://hapi.fhir.org/baseR4";
@@ -27,19 +25,22 @@ router.use("/static", express.static(staticPath));
  *      - `developer_address`
  */
 interface DeveloperPostBody {
-  organizationName: string;
-  developerName: string;
+  organizationName?: string|undefined;
+  developerName?: string|undefined;
 }
 
 router.post("/api/developer", async (req, res) => {
-  let dev = JSON.parse(req.body || "{}") as DeveloperPostBody;
-
-  if (!dev.organizationName) {
-    dev.organizationName = "fake org name";
-    dev.developerName = "fake dev name";
+  let dev:DeveloperPostBody = {};
+  if (!req.body.organizationName) {
+    dev = {
+      organizationName: "fake org name",
+      developerName: "fake dev name",
+    }
+  } else {
+    dev = req.body as DeveloperPostBody;
   }
-
-  let org: r4.Organization = {
+  
+  let org: fhir4.Organization = {
     resourceType: "Organization",
     meta: {
       tag: [{ system: "https://udap-spike.example.org" }],
@@ -58,14 +59,46 @@ router.post("/api/developer", async (req, res) => {
     ],
   };
 
-  const posted = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Organization`, org);
-  console.log("Created org", posted);
-  res.json(posted.body)
+  const apiResp = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Organization`, org);
+  console.log("Created org", apiResp);
+  res.json(apiResp.value)
 });
 
 /**
  * - `GET /api/developer/:id`: return FHIR organization resource or JSON blob??
  */
+router.get("/api/developer/:developerId", async (req, res) => {
+  let devId = req.params.developerId;
+  if (!devId) {
+    res.status(400);
+  }
+
+  const apiResp = await ApiHelper.apiGetFhir<fhir4.Organization>(`${ENDORSER_FHIR_BASE}/Organization/${devId}`);
+
+  if (apiResp.statusCode) {
+    res.status(apiResp.statusCode).json(apiResp.value);
+  } else {
+    res.status(500).send(apiResp.body);
+  }
+});
+
+/**
+ * - `DELETE /api/developer:id`: remove a developer
+ */
+ router.delete("/api/developer/:developerId", async (req, res) => {
+  let devId = req.params.developerId;
+  if (!devId) {
+    res.status(400);
+  }
+
+  const apiResp = await ApiHelper.apiDeleteFhir<fhir4.Organization>(`${ENDORSER_FHIR_BASE}/Organization/${devId}`);
+
+  if (apiResp.statusCode) {
+    res.status(apiResp.statusCode).json(apiResp.value);
+  } else {
+    res.status(500);
+  }
+});
 
 /** - `POST /api/developer/:id/app`: register a new app with the endorsement service (includes a reference to one or more developers)
  *      - save data in Device
@@ -119,8 +152,8 @@ router.post("/api/developer/:developerId/app", async (req, res) => {
 
     let devId = req.params.developerId;
 
-    let devOrgResponse:ApiResponse<r4.Organization> = await 
-        ApiHelper.apiGetFhir<r4.Organization>(`${ENDORSER_FHIR_BASE}/Organization/${devId}`);
+    // let devOrgResponse:ApiResponse<fhir4.Organization> = await 
+    //     ApiHelper.apiGetFhir<fhir4.Organization>(`${ENDORSER_FHIR_BASE}/Organization/${devId}`);
     
     // if ((!response.value) || (!response.value.entry) || (!response.value.entry)) {
         

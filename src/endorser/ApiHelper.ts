@@ -1,13 +1,13 @@
 import fetch from "cross-fetch";
 import {Headers} from "cross-fetch";
-import r4 from "fhir/r4";
+import fhir4 from "fhir/r4";
 
 export interface ApiResponse<T> {
   statusCode?: number;
   statusText?: string;
   body?: string;
   value?: T;
-  outcome?: r4.OperationOutcome;
+  outcome?: fhir4.OperationOutcome;
   error?: any;
 }
 
@@ -50,7 +50,7 @@ export class ApiHelper {
     }
   }
 
-  static async apiGetFhir<T>(
+  static async apiGetFhir<T extends fhir4.Resource>(
     url: string,
     authHeader?: string
   ): Promise<ApiResponse<T>> {
@@ -67,7 +67,7 @@ export class ApiHelper {
       });
       let body: string = await response.text();
       let typed: T | undefined = undefined;
-      let outcome: r4.OperationOutcome | undefined = undefined;
+      let outcome: fhir4.OperationOutcome | undefined = undefined;
 
       // attempt typed parses
       try {
@@ -135,7 +135,7 @@ export class ApiHelper {
     }
   }
 
-  static async apiPostFhir<T extends r4.Resource>(
+  static async apiPostFhir<T extends fhir4.Resource>(
     url: string,
     data: T,
     authHeader?: string,
@@ -164,7 +164,7 @@ export class ApiHelper {
         : null;
       let body: string = await response.text();
       let typed: T | undefined = undefined;
-      let outcome: r4.OperationOutcome | undefined = undefined;
+      let outcome: fhir4.OperationOutcome | undefined = undefined;
 
       // attempt typed parse
       try {
@@ -212,7 +212,7 @@ export class ApiHelper {
     }
   }
 
-  static async apiPutFhir<T>(
+  static async apiPutFhir<T extends fhir4.Resource>(
     url: string,
     data: T,
     authHeader?: string,
@@ -237,7 +237,7 @@ export class ApiHelper {
       });
       let body: string = await response.text();
       let typed: T | undefined = undefined;
-      let outcome: r4.OperationOutcome | undefined = undefined;
+      let outcome: fhir4.OperationOutcome | undefined = undefined;
 
       // attempt typed parse
       try {
@@ -360,7 +360,7 @@ export class ApiHelper {
     }
   }
 
-  static async apiDeleteFhir<T>(
+  static async apiDeleteFhir<T extends fhir4.Resource>(
     url: string,
     authHeader?: string,
     preferHeader?: string
@@ -383,7 +383,7 @@ export class ApiHelper {
       });
       let body: string = await response.text();
       let typed: T | undefined = undefined;
-      let outcome: r4.OperationOutcome | undefined = undefined;
+      let outcome: fhir4.OperationOutcome | undefined = undefined;
 
       // attempt Typed parse
       try {
