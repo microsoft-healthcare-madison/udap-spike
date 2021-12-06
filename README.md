@@ -11,3 +11,5 @@
 * Unclear how the key used to sign a software statement relates to the key used in `private_key_jwt` method. These should be separate to support a trusted dynamic registration protocol based entirely on endorsement metadata, even if some trust frameworks requires certificate chains, etc.
 
 * ^ This language  is problematic because the "MAY" here is trying to reflect a "SHALL NOT", and "SHALL NOT" would prevent use by browser-based apps and other clients that could benefit from a trusted dynamic registration protocol (e.g., non-extractable WebCrypto usage)
+
+* In HAPI where is `meta.source` coming from, with `#...`?

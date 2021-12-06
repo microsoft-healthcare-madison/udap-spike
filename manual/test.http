@@ -22,6 +22,7 @@ Content-Type: application/json
   "developerName": "{{developerName}}"
 }
 
+
 ### GET - Developer by ID
 # @name getDeveloper
 @developerId = {{createDeveloper.response.body.id}}
@@ -31,3 +32,21 @@ GET {{endorserApiUrl}}/developer/{{developerId}}
 # @name deleteDeveloper
 @developerId = {{createDeveloper.response.body.id}}
 DELETE {{endorserApiUrl}}/developer/{{developerId}}
+
+
+### POST - Create App
+# @name createApp
+POST {{endorserApiUrl}}/developer/{{developerId}}/app
+Accept: application/json
+Content-Type: application/json
+
+{
+  "sub": "https://mysub.example.com",
+  "client_name": "The best health app available",
+  "redirect_uris": ["https://mysub.example.com/redirect", "mysub://"]
+}
+
+### GET an endorsement for th eapp
+
+GET {{endorserApiUrl}}/developer/{{developerId}}/app/2705299/endorsement
+

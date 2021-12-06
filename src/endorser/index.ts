@@ -152,7 +152,7 @@ interface AppRegistrationResponse {
 }
 
 router.post("/api/developer/:developerId/app", async (req, res, err) => {
-  let app = JSON.parse(req.body || "{}") as AppRegistrationRequest;
+  let app = (req.body || {}) as AppRegistrationRequest;
 
   let devId = req.params.developerId;
 
@@ -182,9 +182,9 @@ router.post("/api/developer/:developerId/app", async (req, res, err) => {
       },
       {
         system: `https://udap-spike.example.org#client_name`,
-        value: app.sub,
+        value: app.client_name,
       },
-      ...app.redirect_uris.map((r) => ({
+      ...app.redirect_uris.map((r: string) => ({
           system: `https://udap-spike.example.org#redirect_uri`,
           value: r
         })),
@@ -193,7 +193,7 @@ router.post("/api/developer/:developerId/app", async (req, res, err) => {
 
   const posted = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Device`, device);
   console.log("Created device", posted);
-  res.json(posted.body)
+  res.json(posted.value)
 });
 
 const fixturesPath = path.join(__dirname, "..", "..", "fixtures");
@@ -243,7 +243,7 @@ router.get(
     } = config;
 
     console.log("From developer", developer, "Add", app);
-    (await signer).sign({
+    const endorsementJwt = await (await signer).sign({
       // iss is populated by signer
       sub,
       certification_issuer,
@@ -258,6 +258,10 @@ router.get(
       grant_types: ["authorization_code"],
       response_types: ["code"],
     });
+    console.log("JWT generated", endorsementJwt);
+    res.json({
+      endorsement: endorsementJwt
+    })
   }
 );
 
