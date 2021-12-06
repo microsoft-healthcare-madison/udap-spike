@@ -1,10 +1,11 @@
 import express from "express";
 import path from "path";
+import createSigner from "./sign";
 
-import fetch from "cross-fetch";
 import r4 from "fhir/r4";
+import config from "./config";
 
-import {ApiHelper} from "./ApiHelper";
+import { ApiHelper, ApiResponse } from "./ApiHelper";
 
 const ENDORSER_FHIR_BASE =
   process.env.ENDORSER_FHIR_BASE || "https://hapi.fhir.org/baseR4";
@@ -44,10 +45,12 @@ router.post("/api/developer", async (req, res) => {
     meta: {
       tag: [{ system: "https://udap-spike.example.org" }],
     },
-    extension: [{
-        "url": "https://upda-spike.example.org/verification-status",
-        "valueCode": "unverified"
-    }],
+    extension: [
+      {
+        url: "https://upda-spike.example.org/verification-status",
+        valueCode: "unverified",
+      },
+    ],
     name: dev.organizationName,
     contact: [
       {
@@ -58,9 +61,12 @@ router.post("/api/developer", async (req, res) => {
     ],
   };
 
-  const posted = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Organization`, org);
+  const posted = await ApiHelper.apiPostFhir(
+    `${ENDORSER_FHIR_BASE}/Organization`,
+    org
+  );
   console.log("Created org", posted);
-  res.json(posted.body)
+  res.json(posted.body);
 });
 
 /**
@@ -101,11 +107,11 @@ type ResponseTypes = "code";
 type TokenEndpointAuthMethod = "private_key_jwt";
 
 interface AppRegistrationRequest {
-  iss: string | undefined;
+  // TODO delete this line. Note `iss` here would be a property of the endorser, not the app @GinoCanessa iss: string | undefined;
   sub: string | undefined;
   client_name: string;
   redirect_uris: string[];
-  grant_types: GrantTypes[];
+  // TODO support `grant_types` dynamically at some stage grant_types: GrantTypes[];
 }
 
 interface AppRegistrationResponse {
@@ -113,53 +119,116 @@ interface AppRegistrationResponse {
   id: string;
 }
 
+router.post("/api/developer/:developerId/app", async (req, res, err) => {
+  let app = JSON.parse(req.body || "{}") as AppRegistrationRequest;
 
-router.post("/api/developer/:developerId/app", async (req, res) => {
-    let app = JSON.parse(req.body || "{}") as AppRegistrationRequest;
+  let devId = req.params.developerId;
 
-    let devId = req.params.developerId;
+  let devOrgResponse: ApiResponse<r4.Organization> =
+    await ApiHelper.apiGetFhir<r4.Organization>(
+      `${ENDORSER_FHIR_BASE}/Organization/${devId}`
+    );
 
-    let devOrgResponse:ApiResponse<r4.Organization> = await 
-        ApiHelper.apiGetFhir<r4.Organization>(`${ENDORSER_FHIR_BASE}/Organization/${devId}`);
-    
-    // if ((!response.value) || (!response.value.entry) || (!response.value.entry)) {
-        
-    // }
-    
-  
-    // if (!dev.organizationName) {
-    //   dev.organizationName = "fake org name";
-    //   dev.developerName = "fake dev name";
-    // }
-  
-    // let org: r4.Organization = {
-    //   resourceType: "Organization",
-    //   meta: {
-    //     tag: [{ system: "https://udap-spike.example.org" }],
-    //   },
-    //   extension: [{
-    //       "url": "https://upda-spike.example.org/verification-status",
-    //       "valueCode": "unverified"
-    //   }],
-    //   name: dev.organizationName,
-    //   contact: [
-    //     {
-    //       name: {
-    //         text: dev.developerName,
-    //       },
-    //     },
-    //   ],
-    // };
-  
-    // const posted = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Organization`, org);
-    // console.log("Created org", posted);
-    // res.json(posted.body)
-  });
-  
+  if (!devOrgResponse.value) {
+    return err("No developer registered");
+  }
+
+  // TODO check for status
+
+  let device: fhir4.Device = {
+    resourceType: "Device",
+    meta: {
+      tag: [{ system: "https://udap-spike.example.org" }],
+    },
+    owner: {
+      reference: `Organization/${devId}`,
+    },
+    identifier: [
+      {
+        system: `https://udap-spike.example.org#sub`,
+        value: app.sub,
+      },
+      {
+        system: `https://udap-spike.example.org#client_name`,
+        value: app.sub,
+      },
+      ...app.redirect_uris.map((r) => ({
+          system: `https://udap-spike.example.org#redirect_uri`,
+          value: r
+        })),
+    ],
+  };
+
+  const posted = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Device`, device);
+  console.log("Created device", posted);
+  res.json(posted.body)
+});
+
+const fixturesPath = path.join(__dirname, "..", "..", "fixtures");
+
+const signer = createSigner(
+  config.iss,
+  path.join(fixturesPath, "endorser.crt"),
+  path.join(fixturesPath, "endorser.private.key")
+);
+
+interface FhirIdentified {
+  identifier?: fhir4.Identifier[];
+}
+
+const identifiersFor = (r: FhirIdentified, idName: string): string[] =>
+  (r.identifier || [])
+    .filter((i) => i.system === `https://udap-spike.example.org#${idName}`)
+    .map((i) => i.value!);
+
+const identifierFor = (r: FhirIdentified, idName: string) =>
+  identifiersFor(r, idName)[0]!;
 
 /**
- * - `POST /api/developer/:id/app/:id/endorsement`: returns a JWT endorsement for a registered app or an error if the app is not ready for endorsement
+ * - `GET /api/developer/:developerId/app/:appId/endorsement`: returns a JWT endorsement for a registered app or an error if the app is not ready for endorsement
  */
+router.get(
+  "/api/developer/:developerId/app/:appId/endorsement",
+  async (req, res) => {
+    const developer = await ApiHelper.apiGetFhir<r4.Organization>(
+      `${ENDORSER_FHIR_BASE}/Organization/${req.params.developerId}`
+    );
+    const app = await ApiHelper.apiGetFhir<r4.Device>(
+      `${ENDORSER_FHIR_BASE}/Device/${req.params.appId}`
+    );
+
+    const developer_name = developer.value!.name;
+
+    const sub = identifierFor(app.value!, "sub");
+    const client_name = identifierFor(app.value!, "client_name");
+    const redirect_uris = identifiersFor(app.value!, "redirect_uri");
+
+    const {
+      certification_issuer,
+      certification_name,
+      certification_logo,
+      certification_uris,
+      certification_status_endpoint,
+    } = config;
+
+    console.log("From developer", developer, "Add", app);
+    (await signer).sign({
+      // iss is populated by signer
+      sub,
+      certification_issuer,
+      certification_name,
+      certification_logo,
+      certification_uris,
+      certification_status_endpoint,
+      is_endorsement: true,
+      developer_name,
+      client_name,
+      redirect_uris,
+      grant_types: ["authorization_code"],
+      response_types: ["code"],
+    });
+  }
+);
 
 interface AppEndorsementRequest {
   aud?: string | undefined;
@@ -168,103 +237,103 @@ interface AppEndorsementRequest {
 /**
  * Software Statement JWT Claims
  * Notes:
- * The unique client URI used for the iss claim SHALL match the uriName entry in the 
- * Subject Alternative Name extension of the client app operator’s X.509 certificate, and 
- * SHALL uniquely identify a single client app operator and application over time. The 
- * software statement is intended for one-time use with a single OAuth 2.0 server. As such, 
- * the aud claim SHALL list the URL of the OAuth Server’s registration endpoint, and the 
+ * The unique client URI used for the iss claim SHALL match the uriName entry in the
+ * Subject Alternative Name extension of the client app operator’s X.509 certificate, and
+ * SHALL uniquely identify a single client app operator and application over time. The
+ * software statement is intended for one-time use with a single OAuth 2.0 server. As such,
+ * the aud claim SHALL list the URL of the OAuth Server’s registration endpoint, and the
  * lifetime of the software statement (exp minus iat) SHALL be 5 minutes.
  */
 interface AppEndorsementJwtPayload {
-    /** 
-     * Issuer of the JWT -- unique identifying client URI. This SHALL match the value of a 
-     * uniformResourceIdentifier entry in the Subject Alternative Name extension of the 
-     * client's certificate included in the x5c JWT header
-     */
-    iss: string;
+  /**
+   * Issuer of the JWT -- unique identifying client URI. This SHALL match the value of a
+   * uniformResourceIdentifier entry in the Subject Alternative Name extension of the
+   * client's certificate included in the x5c JWT header
+   */
+  iss: string;
 
-    /** 
-     * Same as iss. In typical use, the client application will not yet have a client_id 
-     * from the Authorization Server
-     */
-    sub: string;
+  /**
+   * Same as iss. In typical use, the client application will not yet have a client_id
+   * from the Authorization Server
+   */
+  sub: string;
 
-    /**
-     * The Authorization Server's "registration URL" (the same URL to which the registration 
-     * request  will be posted) 
-     */
-    aud?: string|undefined;
+  /**
+   * The Authorization Server's "registration URL" (the same URL to which the registration
+   * request  will be posted)
+   */
+  aud?: string | undefined;
 
-    /** 
-     * Expiration time integer for this software statement, expressed in seconds since the 
-     * "Epoch" (1970-01-01T00:00:00Z UTC). The exp time SHALL be no more than 5 minutes 
-     * after the value of the iat claim.
-     */
-    exp: number;
+  /**
+   * Expiration time integer for this software statement, expressed in seconds since the
+   * "Epoch" (1970-01-01T00:00:00Z UTC). The exp time SHALL be no more than 5 minutes
+   * after the value of the iat claim.
+   */
+  exp: number;
 
-    /** Issued time integer for this software statement, expressed in seconds since the "Epoch" */
-    iat: number;
+  /** Issued time integer for this software statement, expressed in seconds since the "Epoch" */
+  iat: number;
 
-    /**
-     * A nonce string value that uniquely identifies this software statement. This value SHALL NOT 
-     * be reused by the client app in another software statement or authentication JWT before 
-     * the time specified in the exp claim has passed
-     */
-    jti: string;
+  /**
+   * A nonce string value that uniquely identifies this software statement. This value SHALL NOT
+   * be reused by the client app in another software statement or authentication JWT before
+   * the time specified in the exp claim has passed
+   */
+  jti: string;
 
-    /** A string containing the human readable name of the client application */
-    client_name: string;
+  /** A string containing the human readable name of the client application */
+  client_name: string;
 
-    /** 
-     * An array of one or more redirection URIs used by the client application. This claim 
-     * SHALL be present if grant_types includes "authorization_code" and this claim SHALL 
-     * be absent otherwise. Each URI SHALL use the https scheme.
-     */
-    redirect_uris?: string[]|undefined;
+  /**
+   * An array of one or more redirection URIs used by the client application. This claim
+   * SHALL be present if grant_types includes "authorization_code" and this claim SHALL
+   * be absent otherwise. Each URI SHALL use the https scheme.
+   */
+  redirect_uris?: string[] | undefined;
 
-    /**
-     * An array of URI strings indicating how the data holder can contact the app operator 
-     * regarding the application. The array SHALL contain at least one valid email address 
-     * using the mailto scheme, e.g. ["mailto:operations@example.com"] 
-     */
-    contacts: string[];
+  /**
+   * An array of URI strings indicating how the data holder can contact the app operator
+   * regarding the application. The array SHALL contain at least one valid email address
+   * using the mailto scheme, e.g. ["mailto:operations@example.com"]
+   */
+  contacts: string[];
 
-    /**
-     * A URL string referencing an image associated with the client application, i.e. a logo. 
-     * If grant_types includes "authorization_code", client applications SHALL include this 
-     * field, and the authorization server MAY display this logo to the user during the 
-     * authorization process. The URL SHALL use the https scheme and reference a PNG, JPG, 
-     * or GIF image file, e.g. "https://myapp.example.com/MyApp.png" 
-     */
-    logo_uri: string;
+  /**
+   * A URL string referencing an image associated with the client application, i.e. a logo.
+   * If grant_types includes "authorization_code", client applications SHALL include this
+   * field, and the authorization server MAY display this logo to the user during the
+   * authorization process. The URL SHALL use the https scheme and reference a PNG, JPG,
+   * or GIF image file, e.g. "https://myapp.example.com/MyApp.png"
+   */
+  logo_uri: string;
 
-    /** 
-     * Array of strings, each representing a requested grant type, from the following list: 
-     * "authorization_code", "refresh_token", "client_credentials". The array SHALL include 
-     * either "authorization_code" or "client_credentials", but not both. The value 
-     * "refresh_token" SHALL NOT be present in the array unless "authorization_code" 
-     * is also present. 
-     */
-    grant_types: GrantTypes[];
+  /**
+   * Array of strings, each representing a requested grant type, from the following list:
+   * "authorization_code", "refresh_token", "client_credentials". The array SHALL include
+   * either "authorization_code" or "client_credentials", but not both. The value
+   * "refresh_token" SHALL NOT be present in the array unless "authorization_code"
+   * is also present.
+   */
+  grant_types: GrantTypes[];
 
-    /**
-     * Array of strings. If grant_types contains "authorization_code", then this element 
-     * SHALL have a fixed value of ["code"], and SHALL be omitted otherwise 
-     */
-    response_types: ResponseTypes[];
+  /**
+   * Array of strings. If grant_types contains "authorization_code", then this element
+   * SHALL have a fixed value of ["code"], and SHALL be omitted otherwise
+   */
+  response_types: ResponseTypes[];
 
-    /** Fixed string value: "private_key_jwt" */
-    token_endpoint_auth_method: TokenEndpointAuthMethod[];
+  /** Fixed string value: "private_key_jwt" */
+  token_endpoint_auth_method: TokenEndpointAuthMethod[];
 
-    /**
-     * String containing a space delimited list of scopes requested by the client application 
-     * for use in subsequent requests. The Authorization Server MAY consider this list when 
-     * deciding the scopes that it will allow the application to subsequently request. Client 
-     * apps requesting the "client_credentials" grant type SHOULD request system scopes; apps 
-     * requesting the "authorization_code" grant type SHOULD request user or patient scopes. 
-     */
-    scope: string;
-    }
+  /**
+   * String containing a space delimited list of scopes requested by the client application
+   * for use in subsequent requests. The Authorization Server MAY consider this list when
+   * deciding the scopes that it will allow the application to subsequently request. Client
+   * apps requesting the "client_credentials" grant type SHOULD request system scopes; apps
+   * requesting the "authorization_code" grant type SHOULD request user or patient scopes.
+   */
+  scope: string;
+}
 
 /**
  * - `POST /api/developer/:id/app/:id/endorsement/status`: Returns some specific error if the endorsement has been revoked or if it has expired
