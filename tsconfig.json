@@ -3,6 +3,9 @@
     "module": "commonjs",
     "target": "es6",
     "rootDir": "./",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "lib": ["ES6"],
+    "strict": true,
+    "outDir": "build",
   }
 }
