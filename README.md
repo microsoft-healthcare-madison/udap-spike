@@ -17,3 +17,7 @@
 * UDAP --  after a registration, the client is not necessarily the undo to any key? But if it is bound to a key, does it need to be one that was  presented in an endorsement? Presumably not,  Even if an endorsement was presented.
 
 * UDAP --  the prohibition on reuse of software statements and short lifetime of them is inconsistent with intentions in the underlying dynamic registration specification. This also  limits use of UDAPN scenarios where some data need to be  consistent across multiple registrations of a client and other data can vary
+
+> The top-level elements of the response SHALL include the client_id issued by the Authorization Server for use by the Client App, the software statement as submitted by the Client App, and all of the registration related parameters that were included in the software statement:
+
+* ^ Surely only the params *recognized*/accepted?
