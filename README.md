@@ -16,4 +16,4 @@
 
 * UDAP --  after a registration, the client is not necessarily the undo to any key? But if it is bound to a key, does it need to be one that was  presented in an endorsement? Presumably not,  Even if an endorsement was presented.
 
-* UDAP -- is it expected that software statements are single or to be consistent with the underlying dynamic registration specification, that these can be distributed to multiple instances of a client and reused? If  they are not intended for reuse, how long can they last, and what validation needs to be performed?
+* UDAP --  the prohibition on reuse of software statements and short lifetime of them is inconsistent with intentions in the underlying dynamic registration specification. This also  limits use of UDAPN scenarios where some data need to be  consistent across multiple registrations of a client and other data can vary
