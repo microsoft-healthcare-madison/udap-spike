@@ -21,3 +21,8 @@
 > The top-level elements of the response SHALL include the client_id issued by the Authorization Server for use by the Client App, the software statement as submitted by the Client App, and all of the registration related parameters that were included in the software statement:
 
 * ^ Surely only the params *recognized*/accepted?
+
+
+> as per RFC 7591 (optional); locks this certification to a specific client key or keys. Note that jwks_uri MUST NOT be used
+
+* ^ RFC7591 allows and indeed prefers `jwks_uri`. UDAP should allow it too (and if it's going to be prohibited, call this out as a new requirement, not a "Note" which is misleading).
