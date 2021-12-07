@@ -13,3 +13,7 @@
 * ^ This language  is problematic because the "MAY" here is trying to reflect a "SHALL NOT", and "SHALL NOT" would prevent use by browser-based apps and other clients that could benefit from a trusted dynamic registration protocol (e.g., non-extractable WebCrypto usage)
 
 * In HAPI where is `meta.source` coming from, with `#...`?
+
+* UDAP --  after a registration, the client is not necessarily the undo to any key? But if it is bound to a key, does it need to be one that was  presented in an endorsement? Presumably not,  Even if an endorsement was presented.
+
+* UDAP -- is it expected that software statements are single or to be consistent with the underlying dynamic registration specification, that these can be distributed to multiple instances of a client and reused? If  they are not intended for reuse, how long can they last, and what validation needs to be performed?
