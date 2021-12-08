@@ -1,0 +1,26 @@
+@appBaseUrl = http://localhost:3000/app
+
+@appApiUrl = {{appBaseUrl}}/api
+
+### Get Info
+
+GET {{appApiUrl}}/config
+
+### GET Developer Statement
+
+GET {{appApiUrl}}/developer
+
+### GET App Endorsement
+
+GET {{appApiUrl}}/endorsement
+
+### GET jwks
+GET {{appBaseUrl}}/.well-known/jwks.json
+
+### POST Registration Request
+POST {{appApiUrl}}/register
+Content-Type: application/json
+
+{
+  "ehrRegistrationUrl": "http://localhost:3000/ehr/api/oauth/register"
+}

@@ -46,6 +46,22 @@ Content-Type: application/json
   "redirect_uris": ["https://mysub.example.com/redirect", "https://mysub.example.com/redirect-2"]
 }
 
+
+### POST - Create App (UI Testing)
+# @name createAppTest
+POST {{endorserApiUrl}}/developer/{{developerId}}/app
+Accept: application/json
+Content-Type: application/json
+
+{
+  "sub": "http://localhost:3000/app",
+  "client_name": "UDAP Spike App",
+  "redirect_uris": [
+    "http://localhost:3000/app/oauth-redirect",
+    "http://localhost:3002/"
+  ]
+}
+
 ### Extract result from POST
 @appId = {{createApp.response.body.id}}
 
