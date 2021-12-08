@@ -6,6 +6,7 @@ import createSigner from "./sign";
 import config from "./config";
 
 import { ApiHelper, ApiResponse } from "../ApiHelper";
+import { sign } from "crypto";
 
 const ENDORSER_FHIR_BASE =
   process.env.ENDORSER_FHIR_BASE || "https://hapi.fhir.org/baseR4";
@@ -260,7 +261,7 @@ router.get(
     });
     console.log("JWT generated", endorsementJwt);
     res.json({
-      endorsement: endorsementJwt
+      endorsement: endorsementJwt,
     })
   }
 );
@@ -380,4 +381,10 @@ interface AppEndorsementJwtPayload {
 
 router.get("/api/status.json", (req, res) => {
   res.json({ endorser: true });
+});
+
+router.get("/.well-known/jwks.json", async (req, res) => {
+  res.json({
+    "keys": [(await signer).publicJwk]
+  });
 });
