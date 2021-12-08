@@ -1,5 +1,6 @@
 import express from 'express';
 import endorser from "./endorser";
+import ehr from "./endorser";
 
 const cors = require('cors');
 const app = express();
@@ -16,6 +17,7 @@ app.get("/", (req, res) => {
 })
 
 app.use("/endorser", endorser);
+app.use("/ehr", ehr);
 
 app.listen(port, () => {
   console.log(`UDAP Demo is running on port ${port}.`);

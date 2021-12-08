@@ -5,7 +5,7 @@ import createSigner from "./sign";
 
 import config from "./config";
 
-import { ApiHelper, ApiResponse } from "./ApiHelper";
+import { ApiHelper, ApiResponse } from "../ApiHelper";
 
 const ENDORSER_FHIR_BASE =
   process.env.ENDORSER_FHIR_BASE || "https://hapi.fhir.org/baseR4";

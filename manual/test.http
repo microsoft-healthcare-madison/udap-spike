@@ -42,7 +42,7 @@ Content-Type: application/json
 {
   "sub": "https://mysub.example.com",
   "client_name": "The best health app available",
-  "redirect_uris": ["https://mysub.example.com/redirect", "mysub://redirect"]
+  "redirect_uris": ["https://mysub.example.com/redirect", "https://mysub.example.com/redirect-2"]
 }
 
 ### Extract result from POST
