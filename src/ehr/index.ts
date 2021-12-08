@@ -141,12 +141,35 @@ router.post("/api/oauth/register", async (req, res, err) => {
 
   res.status(201);
   res.json(registered);
-  console.log("Reg", registered)
 
   return;
-  /*
-   */
 });
+
+interface AuthzSession {
+  response_type: "code",
+  client_id: string,
+  redirect_uri: string,
+  scope: string,
+  state: string,
+  aud: string
+}
+
+const authzSessions: Record<string, AuthzSession> = {}
+router.post("/api/oauth/authorize", async (req, res, err) => {
+  const sessionId = randomUUID();
+  authzSessions[sessionId] = req.body;
+  console.log(sessionId, req.body)
+  res.redirect(`${config.authorizeUi}/login.html?session=${sessionId}`);
+});
+
+router.post("/api/authorization/:sessionId/:decision", async (req, res, err) => {
+  const session = authzSessions[req.params.sessionId];
+  if (req.params.decision === "approve") {
+    // generate token and save it
+    res.redirect(session.redirect_uri)
+  }
+});
+
 
 router.get("/api/status.json", (req, res) => {
   res.json({ ehr: true });
