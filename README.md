@@ -26,3 +26,10 @@
 > as per RFC 7591 (optional); locks this certification to a specific client key or keys. Note that jwks_uri MUST NOT be used
 
 * ^ RFC7591 allows and indeed prefers `jwks_uri`. UDAP should allow it too (and if it's going to be prohibited, call this out as a new requirement, not a "Note" which is misleading).
+
+
+### Running tests
+
+
+    docker run -p 8080:8080 hapiproject/hapi:latest
+    ENDORSER_FHIR_BASE=http://localhost:8080/fhir  npm test -- tests/e2e-registration  --watch
