@@ -21,7 +21,7 @@ import {
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 
-export interface AboutComponentProps {
+export interface ControllerInfoComponentProps {
   darkModeEnabled: boolean;
   endorserApiUrl: string;
   developerId: string;
@@ -30,7 +30,7 @@ export interface AboutComponentProps {
   appEndorsement: string;
 }
 
-export default function AboutComponent(props: AboutComponentProps) {
+export default function ControllerInfoComponent(props: ControllerInfoComponentProps) {
 
   const [showDeveloperStatement, setShowDeveloperStatement] = useState<boolean>(false);
   const [showAppEndorsement, setShowAppEndorsement] = useState<boolean>(false);
@@ -50,7 +50,7 @@ export default function AboutComponent(props: AboutComponentProps) {
         aria-controls='dev-info'
         id='dev-info-header'
         >
-        <Typography>App Configuration</Typography>
+        <Typography>Controller App Information</Typography>
       </AccordionSummary>
       <AccordionDetails>
         <TextField

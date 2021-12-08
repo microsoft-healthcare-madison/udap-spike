@@ -37,7 +37,7 @@ const developerData = {
   'developerName': config.devName,
 };
 
-const appData = {
+const controllerAppData = {
   'sub': config.appUrl,
   'client_name': config.clientName,
   'redirect_uris': [
@@ -46,8 +46,21 @@ const appData = {
   ]
 }
 
+let appJWKS:any;
+let appControllerKey:any;
+
 async function initialize() {
   console.log('Initializing app api...');
+
+  appJWKS = JSON.parse(
+    fs
+      .readFileSync(
+        path.join(__dirname, '..', '..', 'fixtures', 'app.jwks.private.json')
+      )
+      .toString()
+  );
+
+  appControllerKey = await jose.importJWK(appJWKS.keys[0], "RS256");
 
   if (!config.defaultDeveloperId) {
     createDeveloperAtEndorser();
@@ -80,7 +93,7 @@ async function initialize() {
 
 async function createAppAtEndorser() {
   const apiResp = await ApiHelper.apiPost<any>(
-    `${config.endorserApiUrl}/developer/${developerId}/app`, appData);
+    `${config.endorserApiUrl}/developer/${developerId}/app`, controllerAppData);
   appEndorsement = apiResp.value;
   appId = apiResp.value.id;
 }
@@ -98,25 +111,31 @@ initialize();
  * - `POST /api/registerWithEHR`: register with an EHR
  */
 interface RegisterRequest {
-  ehrRegistrationUrl: string,
+  ehrRegistrationUrl?: string|undefined,
+  instanceId?: string|undefined,
+  keys?: string[]|undefined,
 }
 
 router.post('/api/registerWithEHR', async(req, res) => {
   let registerInfo = (req.body || {}) as RegisterRequest;
 
-  const appJWKS = JSON.parse(
-    fs
-      .readFileSync(
-        path.join(__dirname, '..', '..', 'fixtures', 'app.jwks.private.json')
-      )
-      .toString()
-  );
+  let statement: any;
 
-  const appKey = await jose.importJWK(appJWKS.keys[0], "RS256");
-
-  const statement = await new jose.SignJWT({
-    ...appData,
-  }).setProtectedHeader({alg: "RS256"}).sign(appKey);
+  if ((registerInfo.instanceId) && (registerInfo.keys)) {
+    statement = await new jose.SignJWT({
+      ...controllerAppData,
+      iss: controllerAppData.sub,
+      sub: `${controllerAppData.sub}#${registerInfo.instanceId}`,
+      jwks: {keys:registerInfo.keys},
+    }).setProtectedHeader({alg: "RS256"}).sign(appControllerKey);
+  } else {
+    statement = await new jose.SignJWT({
+      ...controllerAppData,
+      iss: controllerAppData.sub,
+      sub: `${controllerAppData.sub}`,
+      jwks: {keys:[appControllerKey]},
+    }).setProtectedHeader({alg: "RS256"}).sign(appControllerKey);
+  }
 
   const ehrResp = await ApiHelper.apiPost<any>(
     `${registerInfo.ehrRegistrationUrl}`,

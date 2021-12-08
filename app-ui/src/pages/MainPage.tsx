@@ -12,7 +12,7 @@ import * as fhir4 from 'fhir/r4';
 import SoftwareStatementComponent from '../components/SoftwareStatementComponent';
 import DeveloperComponent from '../components/DeveloperComponent';
 import BasicConfigComponent from '../components/BasicConfigComponent';
-import AboutComponent from '../components/AboutComponent';
+import ControllerInfoComponent from '../components/ControllerInfoComponent';
 
 export interface MainPageProps {
   darkModeEnabled: boolean;
@@ -104,7 +104,7 @@ export default function MainPage(props: MainPageProps) {
       </Snackbar>
       <Box component='main' sx={{ flexGrow: 1, px: 2 }}>
         <Toolbar/>
-        <AboutComponent
+        <ControllerInfoComponent
           darkModeEnabled={props.darkModeEnabled}
           endorserApiUrl={endorderApiUrl}
           developerId={developerId}
