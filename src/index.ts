@@ -3,6 +3,8 @@ import endorser from "./endorser";
 import ehr from "./ehr";
 import cors from "cors";
 
+import fs from "fs";
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -19,6 +21,14 @@ app.get("/", (req, res) => {
 app.use("/endorser", endorser);
 app.use("/ehr", ehr);
 
-app.listen(port, () => {
+const appTestingJwks = JSON.parse(fs.readFileSync(__dirname + "/../fixtures/app.jwks.json").toString());
+app.get("/app/.well-known/jwks.json", (req, res) => {
+  res.json(appTestingJwks)
+
+})
+
+const server = app.listen(port, () => {
   console.log(`UDAP Demo is running on port ${port}.`);
 });
+
+export default server

@@ -58,12 +58,32 @@ router.post("/api/oauth/register", async (req, res, err) => {
     console.log("Endorsement verified? ", endorsement);
 
     const trustedAppJWKS = getJwksForSubject(endorsement.sub);
-    const verifiedSoftwareStatement = await jose.jwtVerify(body.software_statement, trustedAppJWKS);
-    console.log("SW Statement", verifiedSoftwareStatement);
+    const verifiedSoftwareStatement = await jose.jwtVerify(body.software_statement, trustedAppJWKS)
+    const softwareStatement = verifiedSoftwareStatement.payload as unknown as   UDAP_Certification_JWT_Payload;
+    console.log("SW Statement", softwareStatement);
+
+    if (softwareStatement.sub !== endorsement.sub) {
+      console.log("Sub mismatch", softwareStatement.sub, endorsement.sub)
+      return err("Subject of software statement does not match endorsement")
+    }
+
+    if (softwareStatement.client_name !== endorsement.client_name) {
+      return err("Client name from software statement does not match endorsement")
+    }
+
+ 
+    if (!softwareStatement.redirect_uris.every(u => endorsement.redirect_uris.includes(u))){
+      return err("Redirect URIs from software statement do not match endorsement")
+    }
 
 
-
-    const registered: RegisteredAppMetadata = { } as RegisteredAppMetadata;
+    const registered: RegisteredAppMetadata = {
+      ...endorsement,
+      redirect_uris: softwareStatement.redirect_uris
+    } as RegisteredAppMetadata;
+  
+    res.status(201)
+    res.json(registered)
 
     return; 
     /*
