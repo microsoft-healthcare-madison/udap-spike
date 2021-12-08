@@ -2,6 +2,7 @@
 @fhirUrl = http://localhost:8080/fhir
 @endorserStaticUrl = http://localhost:3000/endorser/static
 @endorserApiUrl = http://localhost:3000/endorser/api
+@ehrApiUrl = http://localhost:3000/ehr/api
 
 @organizationName = Test Org
 @developerName = MHM
@@ -49,6 +50,19 @@ Content-Type: application/json
 @appId = {{createApp.response.body.id}}
 
 ### GET an endorsement for the app
+# @name getEndorsement
 
 GET {{endorserApiUrl}}/developer/{{developerId}}/app/{{appId}}/endorsement
+
+### Send endorsement to EHR
+@endorsement = {{getEndorsement.response.body.endorsement}}
+
+POST {{ehrApiUrl}}/oauth/register
+Accept: application/json
+Content-Type: application/json
+
+{
+  "udap": "1",
+  "certifications": ["{{endorsement}}"]
+}
 

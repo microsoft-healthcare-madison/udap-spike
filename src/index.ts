@@ -1,6 +1,6 @@
 import express from 'express';
 import endorser from "./endorser";
-import ehr from "./endorser";
+import ehr from "./ehr";
 import cors from "cors";
 
 const app = express();
