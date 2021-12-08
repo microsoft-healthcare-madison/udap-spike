@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/microsoft-healthcare-madison/udap-spike#readme",
   "devDependencies": {
+    "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
     "@types/node": "^16.11.11",
     "nodemon": "^2.0.15",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "@types/fhir": "^0.0.34",
+    "cors": "^2.8.5",
     "cross-fetch": "^3.1.4",
     "express": "^4.17.1",
     "jose": "^4.3.7"

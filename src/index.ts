@@ -1,8 +1,8 @@
 import express from 'express';
 import endorser from "./endorser";
 import ehr from "./endorser";
+import cors from "cors";
 
-const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
