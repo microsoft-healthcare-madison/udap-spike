@@ -36,3 +36,11 @@
     transform: rotate(360deg);
   }
 }
+
+.MuiTextField-root {
+  margin-top: 1em !important;
+}
+
+.MuiButton-root {
+  margin: 1em !important;
+}

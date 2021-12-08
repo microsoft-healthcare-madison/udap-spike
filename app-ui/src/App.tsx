@@ -1,26 +1,40 @@
-import React from 'react';
-import logo from './logo.svg';
+
+import React, { useState } from 'react';
+import {
+  createTheme,
+  ThemeProvider,
+  CssBaseline,
+} from '@mui/material'
+
 import './App.css';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+import MainPage from './pages/MainPage';
+import AppHeader from './components/AppHeader';
 
-export default App;
+export default function App() {
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+    },
+  });
+
+  function toggleMode() {
+    setDarkMode(!darkMode);
+  }
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppHeader
+        darkModeEnabled={darkMode}
+        toggleVisualMode={toggleMode}
+        />
+      <MainPage
+        darkModeEnabled={darkMode}
+        toggleVisualMode={toggleMode}
+        />
+    </ThemeProvider>
+  );
+};
