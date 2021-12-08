@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 
 import supertest from "supertest";
+import { randomUUID } from "crypto";
 
 const agent = supertest.agent(server);
 
@@ -55,11 +56,19 @@ test("Basic reg flow", async () => {
       .toString()
   );
 
-  const appKey = await jose.importJWK(appJWKS.keys[0], "RS256");
+  const appControllerKey = await jose.importJWK(appJWKS.keys[0], "RS256");
+
+  const appInstanceKey = await jose.generateKeyPair("RS256");
+  const appInstanceJwk = await jose.exportJWK(appInstanceKey.publicKey);
 
   const statement = await new jose.SignJWT({
     ...appDetails,
-  }).setProtectedHeader({alg: "RS256"}).sign(appKey);
+    iss: appDetails.sub,
+    sub: `${appDetails.sub}#${randomUUID()}`,
+    jwks: {"keys": [appInstanceJwk]}
+  }).setProtectedHeader({alg: "RS256"}).sign(appControllerKey);
+
+
 
   const registered = await agent
     .post(`/ehr/api/oauth/register`)
@@ -71,19 +80,4 @@ test("Basic reg flow", async () => {
     });
 
   expect(registered.statusCode).toBe(201)
-
-  //   const post = await Post.create({ title: "Post 1", content: "Lorem ipsum" });
-
-  //   await supertest(app).get("/api/posts")
-  //     .expect(200)
-  //     .then((response) => {
-  //       // Check type and length
-  //       expect(Array.isArray(response.body)).toBeTruthy();
-  //       expect(response.body.length).toEqual(1);
-
-  //       // Check data
-  //       expect(response.body[0]._id).toBe(post.id);
-  //       expect(response.body[0].title).toBe(post.title);
-  //       expect(response.body[0].content).toBe(post.content);
-  //     });
 });
