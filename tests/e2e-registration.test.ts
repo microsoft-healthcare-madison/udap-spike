@@ -1,7 +1,7 @@
 import server from "../src/index";
 import superagent from "superagent";
 import * as jose from "jose";
-import fs from "fs";
+import fs, { rmSync } from "fs";
 import path from "path";
 import qs from "qs";
 
@@ -46,7 +46,12 @@ test("Basic reg flow", async () => {
     `/endorser/api/developer/${developer.body.id}/app/${app.body.id}/endorsement`
   );
 
-  console.log("endorsement", endorsement.body.endorsement);
+  const ehrFhirBase =  `http://localhost:3000/ehr/api/fhir`;
+  const ehrSmartConfiguration = await superagent.get(`${ehrFhirBase}/.well-known/smart-configuration`);
+  expect(ehrSmartConfiguration.body.token_endpoint).toMatch(/oauth\/token/);
+  // console.log("SMART Configuration", ehrSmartConfiguration.body)
+  // console.log("endorsement", endorsement.body.endorsement);
+
   const ehrStatus = await agent.get("/ehr/api/status.json");
   expect(ehrStatus.statusCode).toBe(200);
 
@@ -75,8 +80,8 @@ test("Basic reg flow", async () => {
     .setProtectedHeader({ alg: "RS256" })
     .sign(appControllerKey);
 
-  const registered = await agent
-    .post(`/ehr/api/oauth/register`)
+  const registered = await superagent
+    .post(ehrSmartConfiguration.body.registration_endpoint)
     .set("Content-Type", "application/json")
     .send({
       software_statement: statement,
@@ -84,19 +89,23 @@ test("Basic reg flow", async () => {
       udap: "1",
     });
 
+  expect(registered.body.client_id).toBeTruthy();
+
+
   const authzRequestParams = {
     response_type: "code",
     client_id: registered.body.client_id,
     redirect_uri: registered.body.redirect_uris[0],
     scope: "user/*.cruds",
     state: randomUUID(),
-    aud: `http://localhost:3000/ehr/api/fhir`,
+    aud: ehrFhirBase,
   };
 
-  console.log("start au", authzRequestParams);
-  const authorize = await agent.get(
-    `/ehr/api/oauth/authorize?${qs.stringify(authzRequestParams)}`
-  );
+  const authorize = await superagent.get(ehrSmartConfiguration.body.authorization_endpoint)
+  .redirects(0)  
+  .ok(res => res.status < 400)
+  .query(qs.stringify(authzRequestParams));
+
   const redirectToSkip = new URL(authorize.headers["location"]);
 
   // this is cheating, to skip user authz step
@@ -108,12 +117,12 @@ test("Basic reg flow", async () => {
   const authzCode = new URL(
     fakeUserApproval.headers["location"]
   ).searchParams.get("code");
-  console.log("Authz code", authzCode);
+  // console.log("Authz code", authzCode);
 
   const clientAuthnAssertion = await new jose.SignJWT({
     iss: authzRequestParams.client_id,
     sub: authzRequestParams.client_id,
-    aud: "http://localhost:3000/ehr/api/oauth/token",
+    aud: ehrSmartConfiguration.body.token_endpoint,
   })
     .setExpirationTime("2 minutes")
     .setProtectedHeader({ alg: "RS256", typ: "JWT", kid: "key-001" })
@@ -129,11 +138,22 @@ test("Basic reg flow", async () => {
     client_assertion: clientAuthnAssertion,
   };
 
-  const tokenResponse = await agent
-    .post(`/ehr/api/oauth/token`)
+  const tokenResponse = await superagent
+    .post(ehrSmartConfiguration.body.token_endpoint)
     .set("Content-Type", "application/x-www-form-urlencoded")
     .send(qs.stringify(tokenRequestParams));
 
   expect(registered.statusCode).toBe(201);
   expect(tokenResponse.statusCode).toBe(200);
+
+  const apiQuery404 = await superagent.get(`${ehrFhirBase}/Consent/bad`)
+    .set("Authorization", `Bearer ${tokenResponse.body.access_token}`)
+    .ok(res => res.statusCode === 404)
+  expect(apiQuery404.statusCode).toBe(404);
+
+  const apiQuery200 = await superagent.get(`${ehrFhirBase}/Patient`)
+    .set("Authorization", `Bearer ${tokenResponse.body.access_token}`)
+  // console.log("Queried", apiQuery200.body);
+  expect(apiQuery200.statusCode).toBe(200);
+
 });

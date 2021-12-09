@@ -1,5 +1,4 @@
 import express, { application, response } from "express";
-import fhir4 from "fhir/r4";
 import path from "path";
 import * as jose from "jose";
 import fs from "fs";
