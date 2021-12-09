@@ -63,7 +63,7 @@ async function initialize() {
   appControllerKey = await jose.importJWK(appJWKS.keys[0], "RS256");
 
   if (!config.defaultDeveloperId) {
-    createDeveloperAtEndorser();
+    await createDeveloperAtEndorser();
   } else {
     try {
       const devResp = await ApiHelper.apiGet<any>(`${config.endorserApiUrl}/developer/${config.defaultDeveloperId}`);
@@ -76,7 +76,7 @@ async function initialize() {
   }
 
   if (!config.defaultAppId) {
-    createAppAtEndorser();
+    await createAppAtEndorser();
   } else {
     try {
       const appResp = await ApiHelper.apiGet<any>(

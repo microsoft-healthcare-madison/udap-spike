@@ -4,12 +4,9 @@ import path from "path";
 import createSigner from "./sign";
 
 import config from "./config";
+console.log("END CONFIG", config)
 
 import { ApiHelper, ApiResponse } from "../ApiHelper";
-import { sign } from "crypto";
-
-const ENDORSER_FHIR_BASE =
-  process.env.ENDORSER_FHIR_BASE || "https://hapi.fhir.org/baseR4";
 
 const router = express.Router();
 export default router;
@@ -65,7 +62,7 @@ router.post("/api/developer", async (req, res) => {
     ],
   };
 
-  const apiResp = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Organization`, org);
+  const apiResp = await ApiHelper.apiPostFhir(`${config.endorserFhirBase}/Organization`, org);
   console.log("Created org", apiResp);
   res.json(apiResp.value)
 });
@@ -79,7 +76,7 @@ router.get("/api/developer/:developerId", async (req, res) => {
     res.status(400);
   }
 
-  const apiResp = await ApiHelper.apiGetFhir<fhir4.Organization>(`${ENDORSER_FHIR_BASE}/Organization/${devId}`);
+  const apiResp = await ApiHelper.apiGetFhir<fhir4.Organization>(`${config.endorserFhirBase}/Organization/${devId}`);
 
   if (apiResp.statusCode) {
     res.status(apiResp.statusCode).json(apiResp.value);
@@ -97,7 +94,7 @@ router.get("/api/developer/:developerId", async (req, res) => {
     res.status(400);
   }
 
-  const apiResp = await ApiHelper.apiDeleteFhir<fhir4.Organization>(`${ENDORSER_FHIR_BASE}/Organization/${devId}`);
+  const apiResp = await ApiHelper.apiDeleteFhir<fhir4.Organization>(`${config.endorserFhirBase}/Organization/${devId}`);
 
   if (apiResp.statusCode) {
     res.status(apiResp.statusCode).json(apiResp.value);
@@ -159,7 +156,7 @@ router.post("/api/developer/:developerId/app", async (req, res, err) => {
 
   let devOrgResponse: ApiResponse<fhir4.Organization> =
     await ApiHelper.apiGetFhir<fhir4.Organization>(
-      `${ENDORSER_FHIR_BASE}/Organization/${devId}`
+      `${config.endorserFhirBase}/Organization/${devId}`
     );
 
   if (!devOrgResponse.value) {
@@ -192,7 +189,7 @@ router.post("/api/developer/:developerId/app", async (req, res, err) => {
     ],
   };
 
-  const posted = await ApiHelper.apiPostFhir(`${ENDORSER_FHIR_BASE}/Device`, device);
+  const posted = await ApiHelper.apiPostFhir(`${config.endorserFhirBase}/Device`, device);
   console.log("Created device", posted);
   res.json(posted.value)
 });
@@ -223,10 +220,10 @@ router.get(
   "/api/developer/:developerId/app/:appId/endorsement",
   async (req, res) => {
     const developer = await ApiHelper.apiGetFhir<fhir4.Organization>(
-      `${ENDORSER_FHIR_BASE}/Organization/${req.params.developerId}`
+      `${config.endorserFhirBase}/Organization/${req.params.developerId}`
     );
     const app = await ApiHelper.apiGetFhir<fhir4.Device>(
-      `${ENDORSER_FHIR_BASE}/Device/${req.params.appId}`
+      `${config.endorserFhirBase}/Device/${req.params.appId}`
     );
 
     const developer_name = developer.value!.name;
@@ -243,7 +240,6 @@ router.get(
       certification_status_endpoint,
     } = config;
 
-    console.log("From developer", developer, "Add", app);
     const endorsementJwt = await (await signer).sign({
       // iss is populated by signer
       sub,
