@@ -30,4 +30,9 @@ const server = app.listen(port, () => {
   console.log(`UDAP Demo is running on port ${port}.`);
 });
 
+process.on('uncaughtException', function(err){
+  console.error(err);
+  console.log("Swallowed");
+})
+
 export default server
