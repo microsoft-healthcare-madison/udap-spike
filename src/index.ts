@@ -1,5 +1,6 @@
 import config from "./config";
-const dotenvLoaded = config;
+// Trick tsc into running the import above, for side effects
+const forceDotenvLoadForSideEffects = config;
 
 
 import express from 'express';
@@ -7,8 +8,6 @@ import endorser from "./endorser";
 import ehr from "./ehr";
 import healthApp from "./app";
 import cors from "cors";
-
-import fs from "fs";
 
 const app = express();
 const port = process.env.PORT || 3000;

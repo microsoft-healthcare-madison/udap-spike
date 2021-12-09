@@ -34,4 +34,4 @@
 
 
     docker run -p 8080:8080 hapiproject/hapi:latest
-    ENDORSER_FHIR_BASE=http://localhost:8080/fhir  npm test -- tests/e2e-registration  --watch
+    npm test -- tests/e2e-registration  --watch
