@@ -28,6 +28,8 @@
 * ^ RFC7591 allows and indeed prefers `jwks_uri`. UDAP should allow it too (and if it's going to be prohibited, call this out as a new requirement, not a "Note" which is misleading).
 
 
+* `certification_name` is 0..1 but `certification_uris` is 0..* -- how does one name apply to >1 certification? There should be a data structure with {name, uri, logo} that repeats.
+
 ### Running tests
 
 
