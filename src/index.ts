@@ -2,7 +2,6 @@ import config from "./config";
 // Trick tsc into running the import above, for side effects
 const forceDotenvLoadForSideEffects = config;
 
-
 import express from 'express';
 import endorser from "./endorser";
 import ehr from "./ehr";

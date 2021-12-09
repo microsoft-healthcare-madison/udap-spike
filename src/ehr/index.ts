@@ -1,5 +1,5 @@
 import express from "express";
-import fhir4, { Device } from "fhir/r4";
+import fhir4, { ConsentProvision, Device } from "fhir/r4";
 import * as jose from "jose";
 import { KeyLike } from "jose";
 import path from "path";
@@ -19,7 +19,7 @@ interface RegisteredAppMetadata {
   grant_types: ("authorization_code" | "refresh_token")[];
   response_types: "code";
   token_endpoint_auth_methods: "private_key_jwt";
-  jwks?: {keys: any[]}
+  jwks?: { keys: any[] };
 }
 
 interface UDAP_Certification_JWT_Payload extends RegisteredAppMetadata {
@@ -173,25 +173,30 @@ const authzSessions: Record<string, AuthzSession> = {
 router.get("/api/oauth/authorize", async (req, res, err) => {
   const sessionId = randomUUID();
 
-  const clientDetails = await getExtensionFromIdentified<UDAP_Certification_JWT_Payload>("Device", `client_id|${req.query.client_id}`, "dynreg");
+  const clientDetails =
+    await getExtensionFromIdentified<UDAP_Certification_JWT_Payload>(
+      "Device",
+      `client_id|${req.query.client_id}`,
+      "dynreg"
+    );
   console.log("CDS", clientDetails);
 
   if (clientDetails.redirect_uris.includes(req.body.redirect_uri)) {
     return err("Redirect URL does not match registered values");
   }
 
-  console.log("REqu qyer", JSON.stringify(req.query ))
+  console.log("REqu qyer", JSON.stringify(req.query));
 
   const session = {
     request: req.query as AuthzSession["request"],
     registration: clientDetails,
   };
 
-  console.log("Assign session", sessionId, session)
+  console.log("Assign session", sessionId, session);
   authzSessions[sessionId] = session;
+  console.log("REdir to", `${config.authorizeUi}?task=authorize&session=${sessionId}`)
   res.redirect(`${config.authorizeUi}?task=authorize&session=${sessionId}`);
 });
-
 
 // In real life, this would be protected :-)
 router.get("/api/authorization/:sessionId", async (req, res, err) => {
@@ -205,7 +210,7 @@ router.post(
     const session = authzSessions[req.params.sessionId];
     if (req.params.decision === "approve") {
       const authorizationCode = randomUUID();
-      console.log("Approve", req.params.sessionId, session)
+      console.log("Approve", req.params.sessionId, session);
 
       let consent: fhir4.Consent = {
         resourceType: "Consent",
@@ -257,13 +262,15 @@ interface TokenRequestBody {
 
 async function getIdentifiedResource<T>(
   resourceType: fhir4.FhirResource["resourceType"],
-  identifier: string,
+  identifier: string
 ): Promise<T> {
   const bundle = await ApiHelper.apiGetFhir<fhir4.Bundle>(
-    `${config.ehrFhirBase}/${resourceType}?identifier=${encodeURIComponent("https://udap-spike.example.org#"+identifier)}`
+    `${config.ehrFhirBase}/${resourceType}?identifier=${encodeURIComponent(
+      "https://udap-spike.example.org#" + identifier
+    )}`
   );
 
-  return bundle!.value?.entry?.[0].resource as unknown as T
+  return bundle!.value?.entry?.[0].resource as unknown as T;
 }
 
 async function parseExtension<T>(
@@ -279,13 +286,15 @@ async function parseExtension<T>(
   return details;
 }
 
-
 async function getExtensionFromIdentified<T>(
   resourceType: fhir4.FhirResource["resourceType"],
   identifier: string,
   extension: string
 ): Promise<T> {
-  const entry = await getIdentifiedResource<fhir4.DomainResource>(resourceType, identifier);
+  const entry = await getIdentifiedResource<fhir4.DomainResource>(
+    resourceType,
+    identifier
+  );
   const details = JSON.parse(
     entry.extension?.filter(
       (e) => e.url === `https://upda-spike.example.org/${extension}`
@@ -295,59 +304,155 @@ async function getExtensionFromIdentified<T>(
   return details;
 }
 
+interface AccessTokenResponse {
+  access_token: string;
+  expires_in: number;
+  scope: string;
+  token_type: "Bearer";
+}
+
 router.post("/api/oauth/token", async (req, res, err) => {
   const requestBody = req.body as TokenRequestBody;
 
-  const grant = await getIdentifiedResource<fhir4.Consent>("Consent", `authorization_code|${req.body.code}`);
+  const grant = await getIdentifiedResource<fhir4.Consent>(
+    "Consent",
+    `authorization_code|${req.body.code}`
+  );
   const grantDetails = await parseExtension<AuthzSession>(grant, "grant");
 
   const jwksKeys = grantDetails.registration?.jwks?.keys!;
-  const getKey = async (h: jose.JWTHeaderParameters, t: jose.FlattenedJWSInput): Promise<KeyLike | Uint8Array> => {
-    return jose.importJWK(jwksKeys.filter(k => k.kid === h.kid)[0] as any)
-  }
+  const getKey = async (
+    h: jose.JWTHeaderParameters,
+    t: jose.FlattenedJWSInput
+  ): Promise<KeyLike | Uint8Array> => {
+    return jose.importJWK(jwksKeys.filter((k) => k.kid === h.kid)[0] as any);
+  };
 
-  const clientAuthenticated = await jose.jwtVerify(requestBody.client_assertion, getKey);
+  const clientAuthenticated = await jose.jwtVerify(
+    requestBody.client_assertion,
+    getKey
+  );
   // TODO add aud check to this validation
   if (clientAuthenticated.payload.aud !== `${config.ehrPublicBase}${req.url}`) {
-    return err("Bad audience on authentication JWT: " + `${config.ehrPublicBase}${req.url}`)
+    return err(
+      "Bad audience on authentication JWT: " +
+        `${config.ehrPublicBase}${req.url}`
+    );
   }
-  if (clientAuthenticated.payload.iss !== grantDetails.registration!.client_id){
-    return err("Wrong iss on client authentication JWT")
+  if (
+    clientAuthenticated.payload.iss !== grantDetails.registration!.client_id
+  ) {
+    return err("Wrong iss on client authentication JWT");
   }
-  if (clientAuthenticated.payload.sub !== grantDetails.registration!.client_id){
-    return err("Wrong sub on client authentication JWT")
+  if (
+    clientAuthenticated.payload.sub !== grantDetails.registration!.client_id
+  ) {
+    return err("Wrong sub on client authentication JWT");
   }
   if (clientAuthenticated.payload.exp! > new Date().getTime() / 1000 + 300) {
-    return err("Client authenticatin JWT expires too far into the future")
+    return err("Client authenticatin JWT expires too far into the future");
   }
 
-  const accessTokenResponse = {
+  const accessTokenResponse: AccessTokenResponse = {
     access_token: randomUUID(),
     scope: grantDetails.request.scope,
-    exp: 3600,
-    token_type: "Bearer"
-  }
+    expires_in: 3600,
+    token_type: "Bearer",
+  };
+
+  const TOKEN_LIFETIME_SECONDS = 3600;
+  grant.provision = {
+    period: {
+      start: new Date().toISOString(),
+      end: new Date(
+        new Date().getTime() + TOKEN_LIFETIME_SECONDS * 1000
+      ).toISOString(),
+    },
+  };
 
   grant.status = "active";
   grant.extension?.push({
-        url: "https://upda-spike.example.org/token",
-        valueString: JSON.stringify(accessTokenResponse),
+    url: "https://upda-spike.example.org/token",
+    valueString: JSON.stringify(accessTokenResponse),
   });
 
-  grant.identifier = [{
-        system: `https://udap-spike.example.org#access_token`,
-        value: accessTokenResponse.access_token
-  }]; // The authz code is not valid anymore
+  grant.identifier = [
+    {
+      system: `https://udap-spike.example.org#access_token`,
+      value: accessTokenResponse.access_token,
+    },
+  ]; // The authz code is not valid anymore
 
-  const posted = await ApiHelper.apiPutFhir<fhir4.Consent>(`${config.ehrFhirBase}/Consent/${grant.id}`, grant);
+  const posted = await ApiHelper.apiPutFhir<fhir4.Consent>(
+    `${config.ehrFhirBase}/Consent/${grant.id}`,
+    grant
+  );
   if (posted.statusCode !== 200) {
-    return err("Could not save access token")
+    return err("Could not save access token");
   }
-  console.log("Saved consent", grant)
 
+  console.log("Saved consent", grant);
+  res.json(accessTokenResponse);
+});
 
-  res.json(accessTokenResponse)
+router.get(
+  "/api/fhir/.well-known/smart-configuration",
+  async (req, res, err) => {
+    res.json({
+      authorization_endpoint: `${config.ehrPublicBase}/api/oauth/authorize`,
+      token_endpoint:  `${config.ehrPublicBase}/api/oauth/token`,
+      token_endpoint_auth_methods_supported: [
+        "private_key_jwt",
+      ],
+      grant_types_supported: ["authorization_code"],
+      registration_endpoint:  `${config.ehrPublicBase}/api/oauth/register`,
+      scopes_supported: [
+        "launch",
+        "launch/patient",
+        "user/*.cruds",
+      ],
+      response_types_supported: ["code"],
+      code_challenge_methods_supported: ["S256"],
+      capabilities: [
+        "launch-ehr",
+        "permission-patient",
+        "permission-v2",
+        "client-confidential-asymmetric",
+        "context-ehr-patient",
+      ],
+    });
+  }
+);
 
+router.get("/api/fhir/*", async (req, res, err) => {
+  try {
+    const token = req.headers.authorization?.split(/bearer /i)[1];
+    const grant = await getIdentifiedResource<fhir4.Consent>(
+      "Consent",
+      `access_token|${token}`
+    );
+    const grantTokenDetails = await parseExtension<AccessTokenResponse>(
+      grant,
+      "token"
+    );
+    const expired = new Date(grant.provision!.period!.end!) < new Date();
+    if (expired) {
+      return err("Access token has expired");
+    }
+    if (!grantTokenDetails.scope) {
+      // TODO: check based on requested access here
+      return err("No scopes granted");
+    }
+
+    const targetPath = req.url.split("/api/fhir")[1];
+    const proxied = await ApiHelper.apiGetFhir(
+      `${config.ehrFhirBase}${targetPath}`
+    );
+    res.status(proxied.statusCode!);
+    return res.json(proxied.value);
+  } catch (e) {
+    err(e);
+  }
 });
 
 router.get("/api/status.json", (req, res) => {
