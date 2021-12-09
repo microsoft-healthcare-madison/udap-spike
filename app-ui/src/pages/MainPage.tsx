@@ -7,19 +7,12 @@ import {
   Typography,
 } from '@mui/material';
 
-import * as fhir4 from 'fhir/r4';
-import SoftwareStatementComponent from '../components/SoftwareStatementComponent';
-import DeveloperComponent from '../components/DeveloperComponent';
-import BasicConfigComponent from '../components/BasicConfigComponent';
-import ControllerInfoComponent from '../components/ControllerInfoComponent';
+import { CommonComponentProps } from '../models/CommonComponentProps';
 
 export interface MainPageProps {
-  darkModeEnabled: boolean;
-  toggleVisualMode: (() => void);
-  showError: ((content:string) => void);
+  common: CommonComponentProps;
+  isAuthenticated: boolean;
 }
-
-const resourceDrawerWidth:number = 300;
 
 export default function MainPage(props: MainPageProps) {
 
@@ -28,7 +21,17 @@ export default function MainPage(props: MainPageProps) {
       <Box component='main' sx={{ flexGrow: 1, px: 2 }}>
         <Toolbar/>
         <Typography>Main Page</Typography>
-        <Divider />
+        <Divider sx={{marginBottom: '1em'}} />
+        { props.isAuthenticated &&
+          <Typography>
+            User is currently authenticated with an EHR!
+          </Typography>
+        }
+        { !props.isAuthenticated &&
+          <Typography>
+            User is NOT currently authenticated with an EHR!
+          </Typography>
+        }
       </Box>
     </Box>
   );

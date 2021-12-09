@@ -10,6 +10,7 @@ import {
   Drawer,
   Snackbar,
   ThemeProvider,
+  AlertColor,
 } from '@mui/material'
 
 import './App.css';
@@ -21,15 +22,31 @@ import ControllerInfoPage from './pages/ControllerInfoPage';
 import AppLayoutShell from './pages/AppLayoutShell';
 import { ControllerInfo } from './models/ControllerInfo';
 import { StorageHelper } from './util/StorageHelper';
+import { CommonComponentProps } from './models/CommonComponentProps';
+import { CopyHelper } from './util/CopyHelper';
+
+import {
+  ContentCopy, Warning,
+} from '@mui/icons-material';
+import SmartAuthPage from './pages/StartAuthPage';
+
 
 const appApiUrl:string = 'http://localhost:3000/app/api'
 
-
 export default function App() {
+  interface AlertDialogInfo {
+    isOpen: boolean;
+    content: string;
+    severity: AlertColor;
+  }
+
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
-  const [alertDialogIsOpen, setAlertDialogIsOpen] = useState<boolean>(false);
-  const [alertDialogContent, setAlertDialogContent] = useState<string>('');
+  const [alertInfo, setAlertInfo] = useState<AlertDialogInfo>({
+    isOpen: false,
+    content: '',
+    severity: 'error',
+  });
 
   const [controllerInfo, setControllerInfo] = useState<ControllerInfo>({
     endorserApiUrl: '',
@@ -39,6 +56,14 @@ export default function App() {
     appEndorsement: '',
   });
 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  const [commonProps, setCommonProps] = useState<CommonComponentProps>({
+    darkModeEnabled: false,
+    showMessage: showMessage,
+    copyToClipboard: copyToClipboard,
+    });
+
   const theme = createTheme({
     palette: {
       mode: darkMode ? 'dark' : 'light',
@@ -46,7 +71,6 @@ export default function App() {
   });
 
   function toggleVisualMode() {
-
     if (StorageHelper.isLocalStorageAvailable) {
       localStorage.setItem('visualModeDark', (!darkMode).toString());
     } else {
@@ -56,9 +80,24 @@ export default function App() {
     setDarkMode(!darkMode);
   }
 
-  function showError(content:string) {
-    setAlertDialogContent(content);
-    setAlertDialogIsOpen(true);
+  function copyToClipboard(content: string, hint?: string) {
+    const success = CopyHelper.copyToClipboard(content);
+
+    if ((success) && (hint)) {
+      showMessage(`${hint} Copied!`, 'success');
+    }
+
+    if ((!success) && (hint)) {
+      showMessage('Failed to copy!', 'error');
+    }
+  }
+
+  function showMessage(content:string, severity?:AlertColor) {
+    setAlertInfo({
+      isOpen: true,
+      content: content,
+      severity: severity ?? 'error',
+    });
   }
 
   // useEffect(() => {
@@ -131,8 +170,9 @@ export default function App() {
       setControllerInfo(info);
     } catch (err) {
       console.log('Caught error', err);
-      showError(
-        'Failed to retrieve app configuration!');
+      showMessage(
+        'Failed to retrieve app configuration!',
+        'error');
     }
   }
 
@@ -162,35 +202,50 @@ export default function App() {
   }
 
   return (
+    <>
     <BrowserRouter>
       <Routes>
         <Route path='*' element={
           <AppLayoutShell
+            common={commonProps}
             theme={theme}
-            darkModeEnabled={darkMode}
             toggleVisualMode={toggleVisualMode}
-            alertDialogIsOpen={alertDialogIsOpen}
-            setAlertDialogIsOpen={setAlertDialogIsOpen}
-            alertDialogContent={alertDialogContent}
             />
           }>
+            <Route path='smart' element={
+              <SmartAuthPage 
+                common={commonProps}
+                isAuthenticated={isAuthenticated}
+                />
+            }/>
             <Route path='controller' element={
               <ControllerInfoPage 
-                darkModeEnabled={darkMode}
-                toggleVisualMode={toggleVisualMode}
-                showError={showError}
+                common={commonProps}
                 controllerInfo={controllerInfo}
                 />
             }/>
-            <Route path='*' element={
+            <Route path='' element={
               <MainPage
-                darkModeEnabled={darkMode}
-                toggleVisualMode={toggleVisualMode}
-                showError={showError}
+                common={commonProps}
+                isAuthenticated={isAuthenticated}
               />
             }/>
         </Route>
       </Routes>
     </BrowserRouter>
-  );
+    <Snackbar
+      open={alertInfo.isOpen}
+      autoHideDuration={6000}
+      onClose={() => setAlertInfo({...alertInfo, isOpen: false})}
+      anchorOrigin={{vertical: 'top', horizontal: 'center'}}
+      >
+      <Alert
+        onClose={() => setAlertInfo({...alertInfo, isOpen: false})}
+        severity={alertInfo.severity}
+        >
+        {alertInfo.content}
+      </Alert>
+    </Snackbar>
+    </>
+    );
 };

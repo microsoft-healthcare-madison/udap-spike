@@ -21,10 +21,11 @@ import {
   coy as highlightLight 
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ControllerInfo } from '../models/ControllerInfo';
+import { CommonComponentProps } from '../models/CommonComponentProps';
 
 
 export interface ControllerInfoComponentProps {
-  darkModeEnabled: boolean;
+  common: CommonComponentProps;
   controllerInfo: ControllerInfo;
 }
 
@@ -78,7 +79,7 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
         { (showDeveloperStatement) &&
           <SyntaxHighlighter
             language='json'
-            style={props.darkModeEnabled ? highlightDark : highlightLight}
+            style={props.common.darkModeEnabled ? highlightDark : highlightLight}
             wrapLines={false}
             showLineNumbers
             >
@@ -108,7 +109,7 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
         { (showAppEndorsement) &&
           <SyntaxHighlighter
             language='json'
-            style={props.darkModeEnabled ? highlightDark : highlightLight}
+            style={props.common.darkModeEnabled ? highlightDark : highlightLight}
             wrapLines={false}
             showLineNumbers
             >

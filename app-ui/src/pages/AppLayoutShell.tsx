@@ -23,14 +23,12 @@ import {
 } from '@mui/material'
 
 import AppHeader from '../components/AppHeader';
+import { CommonComponentProps } from '../models/CommonComponentProps';
 
 export interface AppLayoutShellProps {
+  common: CommonComponentProps;
   theme: Theme;
-  darkModeEnabled: boolean;
   toggleVisualMode: (() => void);
-  alertDialogIsOpen: boolean;
-  setAlertDialogIsOpen: ((isOpen:boolean) => void);
-  alertDialogContent: string;
 }
 
 export default function AppLayoutShell(props: AppLayoutShellProps) {
@@ -74,7 +72,7 @@ export default function AppLayoutShell(props: AppLayoutShellProps) {
     <ThemeProvider theme={props.theme}>
       <CssBaseline />
       <AppHeader
-        darkModeEnabled={props.darkModeEnabled}
+        darkModeEnabled={props.common.darkModeEnabled}
         toggleVisualMode={props.toggleVisualMode}
         toggleNavOpen={toggleNavOpen}
         />
@@ -88,21 +86,9 @@ export default function AppLayoutShell(props: AppLayoutShellProps) {
         <List>
           <ListItemLink to='/' primary='Main Page'/>
           <ListItemLink to='/controller' primary='Controller Info'/>
+          <ListItemLink to='/smart' primary='SMART Discovery'/>
         </List>
       </Drawer>
-      <Snackbar
-        open={props.alertDialogIsOpen}
-        autoHideDuration={6000}
-        onClose={() => props.setAlertDialogIsOpen(false)}
-        anchorOrigin={{vertical: 'top', horizontal: 'center'}}
-        >
-        <Alert
-          onClose={() => props.setAlertDialogIsOpen(false)}
-          severity='error'
-          >
-          {props.alertDialogContent}
-        </Alert>
-      </Snackbar>
       <Outlet />      
     </ThemeProvider>
   );

@@ -8,11 +8,10 @@ import {
 
 import ControllerInfoComponent from '../components/ControllerInfoComponent';
 import { ControllerInfo } from '../models/ControllerInfo';
+import { CommonComponentProps } from '../models/CommonComponentProps';
 
 export interface ControllerInfoPageProps {
-  darkModeEnabled: boolean;
-  toggleVisualMode: (() => void);
-  showError: ((content:string) => void);
+  common: CommonComponentProps;
   controllerInfo: ControllerInfo;
 }
 
@@ -26,7 +25,7 @@ export default function ControllerInfoPage(props: ControllerInfoPageProps) {
       <Box component='main' sx={{ flexGrow: 1, px: 2 }}>
         <Toolbar/>
         <ControllerInfoComponent
-          darkModeEnabled={props.darkModeEnabled}
+          common={props.common}
           controllerInfo={props.controllerInfo}
           />
         <Divider />
