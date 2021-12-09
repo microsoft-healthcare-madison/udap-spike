@@ -14,6 +14,8 @@ const port = process.env.PORT || 3000;
 
 // default is allow-any
 app.use(cors());
+app.set('json spaces', 2)
+
 
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
