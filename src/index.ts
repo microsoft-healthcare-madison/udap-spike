@@ -1,5 +1,6 @@
+// See https://github.com/motdotla/dotenv/issues/133#issuecomment-255298822
 import config from "./config";
-// Trick tsc into running the import above, for side effects
+// Trick tsc into running the unused import above, for side effects
 const forceDotenvLoadForSideEffects = config;
 
 import express from 'express';
@@ -24,12 +25,6 @@ app.get("/", (req, res) => {
 app.use("/endorser", endorser);
 app.use("/ehr", ehr);
 app.use('/app', healthApp);
-
-// const appTestingJwks = JSON.parse(fs.readFileSync(__dirname + "/../fixtures/app.jwks.json").toString());
-// app.get("/app/.well-known/jwks.json", (req, res) => {
-//   res.json(appTestingJwks)
-
-// })
 
 const server = app.listen(port, () => {
   console.log(`UDAP Demo is running on port ${port}.`);

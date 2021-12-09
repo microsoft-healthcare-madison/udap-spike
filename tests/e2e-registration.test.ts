@@ -16,8 +16,6 @@ afterAll(async () => {
 
 test("Basic reg flow", async () => {
 
-  // const ehrStatus = await superagent.get("http://localhost:3000/ehr/api/status.json");
-
   const developer = await agent
     .post("/endorser/api/developer")
     .set("Content-Type", "application/json")

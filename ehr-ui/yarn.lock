@@ -1530,6 +1530,11 @@
     "estree-walker" "^1.0.1"
     "picomatch" "^2.2.2"
 
+"@simplewebauthn/browser@^4.1.0":
+  "integrity" "sha512-tIsEfShC1rrqrsNb44tOFuSriAFCz4tkdDnCjHfn2rYxgz+t+yqEvuIRfJHQpFrWSnZPdsjrAHtasj6lzfGI6w=="
+  "resolved" "https://registry.npmjs.org/@simplewebauthn/browser/-/browser-4.1.0.tgz"
+  "version" "4.1.0"
+
 "@sinonjs/commons@^1.7.0":
   "integrity" "sha512-sruwd86RJHdsVf/AtBoijDmUqJp3B6hF/DGC23C+JaegnDHaZyewCjoVGTdg3J0uz3Zs7NnIT05OBOmML72lQw=="
   "resolved" "https://registry.npmjs.org/@sinonjs/commons/-/commons-1.8.2.tgz"

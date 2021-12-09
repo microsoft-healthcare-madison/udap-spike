@@ -44,7 +44,6 @@ const getJwksForSubject = (s: string) =>
   jose.createRemoteJWKSet(new URL(`${s}/.well-known/jwks.json`));
 
 router.post("/api/oauth/register", async (req, res, err) => {
-  console.log("Reg requset");
   let body = req.body as RegistrationRequestBody;
   if (body.udap !== "1") {
     return err("Only udap flavor dynreg supported");
@@ -66,7 +65,6 @@ router.post("/api/oauth/register", async (req, res, err) => {
   );
   const endorsement =
     verifiedEndorsement.payload as unknown as UDAP_Certification_JWT_Payload;
-  console.log("Endorsement verified? ", endorsement);
 
   const trustedAppJWKS = getJwksForSubject(endorsement.sub);
   const verifiedSoftwareStatement = await jose.jwtVerify(
@@ -75,7 +73,6 @@ router.post("/api/oauth/register", async (req, res, err) => {
   );
   const softwareStatement =
     verifiedSoftwareStatement.payload as unknown as UDAP_Certification_JWT_Payload;
-  console.log("SW Statement", softwareStatement);
 
   if (softwareStatement.iss !== endorsement.sub) {
     return err(
@@ -179,24 +176,153 @@ router.get("/api/oauth/authorize", async (req, res, err) => {
       `client_id|${req.query.client_id}`,
       "dynreg"
     );
-  console.log("CDS", clientDetails);
 
   if (clientDetails.redirect_uris.includes(req.body.redirect_uri)) {
     return err("Redirect URL does not match registered values");
   }
-
-  console.log("REqu qyer", JSON.stringify(req.query));
 
   const session = {
     request: req.query as AuthzSession["request"],
     registration: clientDetails,
   };
 
-  console.log("Assign session", sessionId, session);
   authzSessions[sessionId] = session;
-  console.log("REdir to", `${config.authorizeUi}?task=authorize&session=${sessionId}`)
   res.redirect(`${config.authorizeUi}?task=authorize&session=${sessionId}`);
 });
+
+interface ChallengeCacheEntry {
+  challenge: string;
+  uid: string;
+  status: "pending" | "solved";
+}
+type ChallengeCache = Record<string, ChallengeCacheEntry>;
+
+const challenges: ChallengeCache = {};
+
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse
+} from "@simplewebauthn/server";
+
+const origin = new URL(config.authorizeUi).origin;
+const rpID = new URL(config.ehrPublicBase).hostname;
+router.get("/api/webauthn/register", async (req, res, err) => {
+  const options = generateRegistrationOptions({
+    rpName: "UDAP Demo EHR",
+    rpID,
+    userID: randomUUID(),
+    userName: "John Smith",
+    attestationType: "indirect",
+  });
+
+  const newChallenge: ChallengeCacheEntry = {
+    challenge: options.challenge,
+    uid: options.user.id,
+    status: "pending",
+  };
+
+  challenges[newChallenge.challenge] = newChallenge;
+
+  res.json(options);
+});
+
+router.post("/api/webauthn/register/verify/:uid", async (req, res, err) => {
+  const expectedChallenge: string = Object.values(challenges).filter(
+    (c) => c.uid == req.params.uid
+  )[0].challenge;
+
+  const verification = await verifyRegistrationResponse({
+    credential: req.body,
+    expectedChallenge,
+    expectedOrigin: origin,
+    expectedRPID: rpID,
+  });
+
+  const { verified, registrationInfo } = verification;
+  verification.registrationInfo
+
+  let device: fhir4.Device = {
+    resourceType: "Device",
+    meta: {
+      tag: [{ system: "https://udap-spike.example.org" }],
+    },
+    identifier: [
+      {
+        system: `https://udap-spike.example.org#webauthn`,
+        value: verification.registrationInfo?.credentialID.toString("base64url")
+      },
+    ],
+    extension: [
+      {
+        url: "https://upda-spike.example.org/webauthn",
+        valueString: JSON.stringify(verification.registrationInfo),
+      },
+    ],
+  };
+
+  const posted = await ApiHelper.apiPostFhir(
+    `${config.ehrFhirBase}/Device`,
+    device
+  );
+
+  if (posted.statusCode !== 201) {
+    return err("Failed to save registration");
+  }
+
+
+  res.json(verified);
+});
+
+router.get("/api/webauthn/login", async (req, res, err) => {
+  const options = generateAuthenticationOptions({
+    rpID,
+    userVerification: "discouraged"
+  });
+
+  const newChallenge: ChallengeCacheEntry = {
+    challenge: options.challenge,
+
+    status: "pending",
+    uid: "unbound"
+  };
+
+  challenges[newChallenge.challenge] = newChallenge;
+
+  res.json(options);
+});
+
+router.post("/api/webauthn/login/verify/:challenge", async (req, res, err) => {
+  const id = req.body.id as string;
+  const expectedChallenge: string = Object.values(challenges).filter(
+    (c) => c.challenge == req.params.challenge
+  )[0].challenge;
+
+  const authenticator: any = await getExtensionFromIdentified("Device", `webauthn|${id}`, "webauthn");
+
+  const verification = await verifyAuthenticationResponse({
+    credential: req.body,
+    expectedChallenge,
+    expectedOrigin: origin,
+    expectedRPID: rpID,
+    authenticator: {
+      counter: authenticator.counter,
+      credentialID: Buffer.from(authenticator.credentialID.data),
+      credentialPublicKey: Buffer.from(authenticator.credentialPublicKey.data),
+      transports: authenticator.transports
+    },
+  });
+
+  const { verified, authenticationInfo } = verification;
+
+  res.json(verified)
+
+
+
+
+});
+
 
 // In real life, this would be protected :-)
 router.get("/api/authorization/:sessionId", async (req, res, err) => {
@@ -208,9 +334,9 @@ router.post(
   "/api/authorization/:sessionId/:decision",
   async (req, res, err) => {
     const session = authzSessions[req.params.sessionId];
+
     if (req.params.decision === "approve") {
       const authorizationCode = randomUUID();
-      console.log("Approve", req.params.sessionId, session);
 
       let consent: fhir4.Consent = {
         resourceType: "Consent",
@@ -391,7 +517,6 @@ router.post("/api/oauth/token", async (req, res, err) => {
     return err("Could not save access token");
   }
 
-  console.log("Saved consent", grant);
   res.json(accessTokenResponse);
 });
 
@@ -400,17 +525,11 @@ router.get(
   async (req, res, err) => {
     res.json({
       authorization_endpoint: `${config.ehrPublicBase}/api/oauth/authorize`,
-      token_endpoint:  `${config.ehrPublicBase}/api/oauth/token`,
-      token_endpoint_auth_methods_supported: [
-        "private_key_jwt",
-      ],
+      token_endpoint: `${config.ehrPublicBase}/api/oauth/token`,
+      token_endpoint_auth_methods_supported: ["private_key_jwt"],
       grant_types_supported: ["authorization_code"],
-      registration_endpoint:  `${config.ehrPublicBase}/api/oauth/register`,
-      scopes_supported: [
-        "launch",
-        "launch/patient",
-        "user/*.cruds",
-      ],
+      registration_endpoint: `${config.ehrPublicBase}/api/oauth/register`,
+      scopes_supported: ["launch", "launch/patient", "user/*.cruds"],
       response_types_supported: ["code"],
       code_challenge_methods_supported: ["S256"],
       capabilities: [
