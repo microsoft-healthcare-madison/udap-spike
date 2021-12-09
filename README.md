@@ -31,6 +31,13 @@
 * `certification_name` is 0..1 but `certification_uris` is 0..* -- how does one name apply to >1 certification? There should be a data structure with {name, uri, logo} that repeats.
 
 
+### Build and run in Docker
+
+    docker build -t udap .
+    docker network create udap
+    docker run   --network=udap --name hapi -p 8080:8080 hapiproject/hapi:latest
+    docker run -e ENDORSER_FHIR_BASE=http://hapi:8080/fhir --network=udap  --rm -it  -p 3000:3000  udap
+
 ### Building EHR UI
 
 
@@ -44,7 +51,6 @@ Then to point the EHR API to this statically hosted EHR authz screen, pass this 
 
 
 ### Running tests
-
 
     docker run -p 8080:8080 hapiproject/hapi:latest
     npm test -- tests/e2e-registration  --watch
