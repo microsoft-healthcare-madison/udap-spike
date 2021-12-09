@@ -5,7 +5,7 @@ const dotenvLoaded = config;
 import express from 'express';
 import endorser from "./endorser";
 import ehr from "./ehr";
-// import healthApp from "./app";
+import healthApp from "./app";
 import cors from "cors";
 
 import fs from "fs";
@@ -25,7 +25,7 @@ app.get("/", (req, res) => {
 
 app.use("/endorser", endorser);
 app.use("/ehr", ehr);
-// app.use('/app', healthApp);
+app.use('/app', healthApp);
 
 // const appTestingJwks = JSON.parse(fs.readFileSync(__dirname + "/../fixtures/app.jwks.json").toString());
 // app.get("/app/.well-known/jwks.json", (req, res) => {
