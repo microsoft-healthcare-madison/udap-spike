@@ -20,15 +20,12 @@ import {
   atomDark as highlightDark, 
   coy as highlightLight 
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ControllerInfo } from '../models/ControllerInfo';
 
 
 export interface ControllerInfoComponentProps {
   darkModeEnabled: boolean;
-  endorserApiUrl: string;
-  developerId: string;
-  developerStatement: string;
-  appId: string;
-  appEndorsement: string;
+  controllerInfo: ControllerInfo;
 }
 
 export default function ControllerInfoComponent(props: ControllerInfoComponentProps) {
@@ -55,7 +52,7 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
           label='Endorser API URL'
           InputLabelProps={{shrink:true}}
           helperText='Full URL to the root of the Endorser API (e.g., http://localhost:3000/endorser/api)'
-          value={props.endorserApiUrl}
+          value={props.controllerInfo.endorserApiUrl}
           disabled={true}
           />
         <TextField
@@ -64,7 +61,7 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
           label='Developer ID'
           InputLabelProps={{shrink:true}}
           helperText='ID of the developer endorsing this application'
-          value={props.developerId}
+          value={props.controllerInfo.developerId}
           disabled={true}
           />
         <Button
@@ -85,7 +82,7 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
             wrapLines={false}
             showLineNumbers
             >
-            {props.developerStatement}
+            {props.controllerInfo.developerStatement}
           </SyntaxHighlighter>
         }
         <TextField
@@ -94,7 +91,7 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
           label='App ID'
           InputLabelProps={{shrink:true}}
           helperText='ID of this application'
-          value={props.appId}
+          value={props.controllerInfo.appId}
           disabled={true}
           />
         <Button
@@ -115,7 +112,7 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
             wrapLines={false}
             showLineNumbers
             >
-            {props.appEndorsement}
+            {props.controllerInfo.appEndorsement}
           </SyntaxHighlighter>
         }
     </Box>

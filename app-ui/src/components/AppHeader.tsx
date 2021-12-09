@@ -28,7 +28,6 @@ export default function AppHeader(props: AppHeaderProps) {
   const [settingsVisible, setSettingsVisible] = useState<boolean>(false);
 
   function handleModeChange(event: React.MouseEvent<HTMLElement>, modeValue:any) {
-    console.log(modeValue)
     if (modeValue !== null) {
       props.toggleVisualMode();
     }

@@ -63,7 +63,7 @@ async function initialize() {
   appControllerKey = await jose.importJWK(appJWKS.keys[0], "RS256");
 
   if (!config.defaultDeveloperId) {
-    await createDeveloperAtEndorser();
+    await createDeveloperAtEndorser();    
   } else {
     try {
       const devResp = await ApiHelper.apiGet<any>(`${config.endorserApiUrl}/developer/${config.defaultDeveloperId}`);
@@ -89,6 +89,8 @@ async function initialize() {
   }
 
   console.log('app api Initialized!');
+  console.log(' <<< developerId:', developerId);
+  console.log(' <<<       appId:', appId);
 }
 
 async function createAppAtEndorser() {
@@ -160,8 +162,8 @@ interface ConfigResponse {
 router.get('/api/config', async(req, res) => {
   let current:ConfigResponse = {
     endorserApiUrl: config.endorserApiUrl,
-    developerId: config.defaultDeveloperId,
-    appId: config.defaultAppId,
+    developerId: developerId,
+    appId: appId,
   };
 
   res.json(current);
@@ -190,7 +192,7 @@ router.get('/api/developer', async(req, res) => {
   }
 
   const apiResp = await ApiHelper.apiGet(
-    `${config.endorserApiUrl}/developer/${config.defaultDeveloperId}/app/${config.defaultAppId}/endorsement`);
+    `${config.endorserApiUrl}/developer/${developerId}/app/${appId}/endorsement`);
   res.json(apiResp.value);
 });
 
