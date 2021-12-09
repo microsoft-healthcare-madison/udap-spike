@@ -4,7 +4,6 @@ import path from "path";
 import createSigner from "./sign";
 
 import config from "./config";
-console.log("END CONFIG", config)
 
 import { ApiHelper, ApiResponse } from "../ApiHelper";
 
@@ -63,7 +62,6 @@ router.post("/api/developer", async (req, res) => {
   };
 
   const apiResp = await ApiHelper.apiPostFhir(`${config.endorserFhirBase}/Organization`, org);
-  console.log("Created org", apiResp);
   res.json(apiResp.value)
 });
 
@@ -190,7 +188,6 @@ router.post("/api/developer/:developerId/app", async (req, res, err) => {
   };
 
   const posted = await ApiHelper.apiPostFhir(`${config.endorserFhirBase}/Device`, device);
-  console.log("Created device", posted);
   res.json(posted.value)
 });
 
@@ -255,7 +252,6 @@ router.get(
       grant_types: ["authorization_code"],
       response_types: ["code"],
     });
-    console.log("JWT generated", endorsementJwt);
     res.json({
       endorsement: endorsementJwt,
     })

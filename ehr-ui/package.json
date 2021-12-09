@@ -1,8 +1,9 @@
 {
   "name": "ehr-ui",
-  "proxy": "http://localhost:3000/ehr",
+  "proxy": "http://localhost:3000",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@simplewebauthn/browser": "^4.1.0",
     "@testing-library/jest-dom": "^5.11.4",

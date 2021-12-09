@@ -12,6 +12,10 @@ import { genericTypeAnnotation } from "@babel/types";
 const router = express.Router();
 export default router;
 
+const staticPath = path.join(__dirname, "static");
+router.use("/static", express.static(staticPath));
+
+
 interface RegisteredAppMetadata {
   redirect_uris: string[];
   client_name: string;
@@ -161,7 +165,7 @@ const authzSessions: Record<string, AuthzSession> = {
   "123": {
     request: {
       redirect_uri: "https://udap.org",
-      scope: "patient/*.read",
+      scope: "user/*.cruds",
     },
     registration: { client_name: "Test Client for Demo Session" },
   } as AuthzSession,
@@ -233,6 +237,7 @@ router.post("/api/webauthn/register/verify/:uid", async (req, res, err) => {
     (c) => c.uid == req.params.uid
   )[0].challenge;
 
+  console.log("Expect", origin, config.authorizeUi)
   const verification = await verifyRegistrationResponse({
     credential: req.body,
     expectedChallenge,
@@ -334,6 +339,9 @@ router.post(
   "/api/authorization/:sessionId/:decision",
   async (req, res, err) => {
     const session = authzSessions[req.params.sessionId];
+    if (!session) {
+      return err("No session found");
+    }
 
     if (req.params.decision === "approve") {
       const authorizationCode = randomUUID();
@@ -524,6 +532,8 @@ router.get(
   "/api/fhir/.well-known/smart-configuration",
   async (req, res, err) => {
     res.json({
+      udap_versions_supported: ["1"],
+      udap_certifications_required: ["https://udap-spike.example.org/endorser/policy.html"],
       authorization_endpoint: `${config.ehrPublicBase}/api/oauth/authorize`,
       token_endpoint: `${config.ehrPublicBase}/api/oauth/token`,
       token_endpoint_auth_methods_supported: ["private_key_jwt"],

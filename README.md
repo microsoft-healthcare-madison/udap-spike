@@ -30,6 +30,19 @@
 
 * `certification_name` is 0..1 but `certification_uris` is 0..* -- how does one name apply to >1 certification? There should be a data structure with {name, uri, logo} that repeats.
 
+
+### Building EHR UI
+
+
+    cd ehr-ui
+    npm run build && cp -r build/* ../src/ehr/static/
+    cd ..
+
+Then to point the EHR API to this statically hosted EHR authz screen, pass this location in via `AUTHORIZE_UI`, like:
+
+    AUTHORIZE_UI="http://localhost:3000/ehr/static" npm run serve
+
+
 ### Running tests
 
 

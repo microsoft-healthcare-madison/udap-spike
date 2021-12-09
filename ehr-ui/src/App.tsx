@@ -27,10 +27,10 @@ function AuthScreen(props: { onLogin: () => void }) {
   const [debuggingData, setDebuggingData] = useState("");
 
   async function register() {
-    const webauthn = await fetch(`/api/webauthn/register`).then(r=>r.json())
+    const webauthn = await fetch(`/ehr/api/webauthn/register`).then(r=>r.json())
     const attResp = await startRegistration(webauthn);
 
-    const verificationResp = await fetch(`/api/webauthn/register/verify/${webauthn.user.id}`, {
+    const verificationResp = await fetch(`/ehr/api/webauthn/register/verify/${webauthn.user.id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -45,7 +45,7 @@ function AuthScreen(props: { onLogin: () => void }) {
   }
 
   async function login() {
-    const webauthn = await fetch(`/api/webauthn/login`).then(r=>r.json());
+    const webauthn = await fetch(`/ehr/api/webauthn/login`).then(r=>r.json());
     (webauthn.allowCredentials = webauthn.allowCredentials || []).push({
       id: localStorage.getItem("credentialID"),
       type: "public-key"
@@ -53,7 +53,7 @@ function AuthScreen(props: { onLogin: () => void }) {
 
     const resp = await startAuthentication(webauthn);
 
-    const submission = await fetch(`/api/webauthn/login/verify/${webauthn.challenge}`, {
+    const submission = await fetch(`/ehr/api/webauthn/login/verify/${webauthn.challenge}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ function App() {
     if (!session) {
       return;
     }
-    fetch(`/api/authorization/${session}`)
+    fetch(`/ehr/api/authorization/${session}`)
       .then((r) => r.json())
       .then(setSessionDetails);
   }, [task, session, authenticated]);
@@ -121,7 +121,7 @@ function App() {
 
   const clickApprove = async () => {
     const f = document.createElement("form");
-    f.action = `/api/authorization/${session}/approve`;
+    f.action = `/ehr/api/authorization/${session}/approve`;
     f.method = "POST";
     f.target = "_blank";
     document.body.appendChild(f);
