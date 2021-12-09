@@ -4,16 +4,11 @@ import {
   Box, 
   Divider,
   Toolbar,
-  Typography,
 } from '@mui/material';
 
-import * as fhir4 from 'fhir/r4';
-import SoftwareStatementComponent from '../components/SoftwareStatementComponent';
-import DeveloperComponent from '../components/DeveloperComponent';
-import BasicConfigComponent from '../components/BasicConfigComponent';
 import ControllerInfoComponent from '../components/ControllerInfoComponent';
 
-export interface MainPageProps {
+export interface ControllerInfoPageProps {
   darkModeEnabled: boolean;
   toggleVisualMode: (() => void);
   showError: ((content:string) => void);
@@ -22,7 +17,7 @@ export interface MainPageProps {
 const resourceDrawerWidth:number = 300;
 const appApiUrl:string = 'http://localhost:3000/app/api'
 
-export default function MainPage(props: MainPageProps) {
+export default function ControllerInfoPage(props: ControllerInfoPageProps) {
 
   const [endorderApiUrl, setEndorserApiUrl] = useState<string>('');
 
@@ -83,7 +78,14 @@ export default function MainPage(props: MainPageProps) {
     <Box sx={{ display: 'flex' }}>
       <Box component='main' sx={{ flexGrow: 1, px: 2 }}>
         <Toolbar/>
-        <Typography>Main Page</Typography>
+        <ControllerInfoComponent
+          darkModeEnabled={props.darkModeEnabled}
+          endorserApiUrl={endorderApiUrl}
+          developerId={developerId}
+          developerStatement={developerStatement}
+          appId={appId}
+          appEndorsement={appEndorsement}
+          />
         <Divider />
       </Box>
     </Box>

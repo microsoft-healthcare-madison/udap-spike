@@ -20,6 +20,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 export interface AppHeaderProps {
   darkModeEnabled: boolean;
   toggleVisualMode: (() => void);
+  toggleNavOpen: (() => void);
 }
 
 export default function AppHeader(props: AppHeaderProps) {
@@ -40,6 +41,12 @@ export default function AppHeader(props: AppHeaderProps) {
       sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
       <Toolbar>
+        <IconButton
+          aria-label='navigation'
+          onClick={() => props.toggleNavOpen()}
+          >
+          <MenuIcon/>
+        </IconButton>
         <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
           UDAP Spike App
         </Typography>

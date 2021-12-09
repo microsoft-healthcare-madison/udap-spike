@@ -4,6 +4,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   TextField,
   Typography,
@@ -44,16 +45,11 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
   }
 
   return(
-    <Accordion>
-      <AccordionSummary
-        expandIcon={<ExpandMore/>}
-        aria-controls='dev-info'
-        id='dev-info-header'
-        >
-        <Typography>Controller App Information</Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        <TextField
+    <Box>
+      <Typography>
+        Controller App Information
+      </Typography>
+      <TextField
           fullWidth
           id='endorser-api-url'
           label='Endorser API URL'
@@ -122,7 +118,6 @@ export default function ControllerInfoComponent(props: ControllerInfoComponentPr
             {props.appEndorsement}
           </SyntaxHighlighter>
         }
-      </AccordionDetails>
-    </Accordion>
+    </Box>
   );
 }
