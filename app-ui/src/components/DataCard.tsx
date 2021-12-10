@@ -5,6 +5,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Card,
+  Divider,
   Icon,
   CircularProgress,
   Button,
@@ -82,23 +83,23 @@ export default function DataCard(props: DataCardProps) {
       <AccordionSummary
         expandIcon={<ExpandMoreIcon/>}
         >
-      <Typography variant='h5'>
-        {iconForCard()}
-        {props.info.optional ? '(Optional) ':''}{props.info.heading}
-        { ((showContent) && (props.data.length > 1)) &&
-        <Select
-          id='index-selector'
-          value={selectedDataIndex.toString()}
-          onChange={handleDataIndexChange}
-          style={{margin: 5}}
-          >
-          <option value={-1}>Latest</option>
-          { props.data.map((value, index) => (
-            <option key={index} value={index}>{value.name}</option> 
-            ))}
-        </Select>
-        }
-      </Typography>
+        <Typography variant='h5'>
+          {iconForCard()}
+          {props.info.optional ? '(Optional) ':''}{props.info.heading}
+          { ((showContent) && (props.data.length > 1)) &&
+            <Select
+              id='index-selector'
+              value={selectedDataIndex.toString()}
+              onChange={handleDataIndexChange}
+              style={{margin: 5}}
+              >
+              <option value={-1}>Latest</option>
+              { props.data.map((value, index) => (
+                <option key={index} value={index}>{value.name}</option> 
+                ))}
+            </Select>
+          }
+        </Typography>
       </AccordionSummary>
       <AccordionDetails>
         { (props.info.description !== '') &&

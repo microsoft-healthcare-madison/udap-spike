@@ -31,6 +31,7 @@ import {
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm'
 
 import {
   Remove as NoTypeIcon,
@@ -78,48 +79,26 @@ export default function RequestDataPanel(props: RequestPanelProps) {
     if (selectedTabId !== '') {
       setDisplayedTabId(selectedTabId);
     }
-      
+    
     if (selectedTabId === '') {
-      if (props.data[dataRowIndex].info) {
-        setDisplayedTabId('info');
-      } else if (props.data[dataRowIndex].responseData) {
-        setDisplayedTabId('response_data');
-      } else if (props.data[dataRowIndex].outcome) {
-        setDisplayedTabId('outcome');
-      } else if (props.data[dataRowIndex].requestData) {
-        setDisplayedTabId('request_data');
-      } else if (props.data[dataRowIndex].requestUrl) {
-        setDisplayedTabId('request_url');
-      }
+      setDisplayedTabId('0');
+      // if (props.data[dataRowIndex].info) {
+      //   setDisplayedTabId('info');
+      // } else if (props.data[dataRowIndex].responseData) {
+      //   setDisplayedTabId('response_data');
+      // } else if (props.data[dataRowIndex].outcome) {
+      //   setDisplayedTabId('outcome');
+      // } else if (props.data[dataRowIndex].requestData) {
+      //   setDisplayedTabId('request_data');
+      // } else if (props.data[dataRowIndex].requestUrl) {
+      //   setDisplayedTabId('request_url');
+      // }
     }
   }, [props.data, selectedTabId, displayedTabId, dataRowIndex]);
 
   if ((!props.data) || (props.data.length === 0)) {
     return(null);
   }
-    
-  // interface TabPanelProps {
-  //   children?: React.ReactNode;
-  //   id: string;
-  //   value: number;
-  //   index: number;
-  // }
-
-  // function TabPanel(props: TabPanelProps) {
-  //   const { id, children, value, ...other } = props;
-
-  //   return (
-  //     <div
-  //       role='tabpanel'
-  //       id={id}
-  //       hidden={value !== index}
-  //       aria-labelledby={id}
-  //       {...other}
-  //     >
-  //       {children}
-  //     </div>
-  //   );
-  // }
 
   function iconForType(dataType: RenderDataAsTypes|undefined):JSX.Element {
     switch (dataType)
@@ -138,6 +117,7 @@ export default function RequestDataPanel(props: RequestPanelProps) {
   }
 
   function handleCopyClick() {
+    console.log(`Request to copy from ${displayedTabId}`);
     switch (displayedTabId)
     {
       case 'request_url':
@@ -227,9 +207,9 @@ export default function RequestDataPanel(props: RequestPanelProps) {
           <ReactMarkdown
             className={props.common.darkModeEnabled ? 'code-md-tab-dark' : 'code-md-tab-light'}
             skipHtml={false}
-            >
-            {content}
-          </ReactMarkdown>
+            children={content}
+            remarkPlugins={[remarkGfm]}
+            />
         </TabPanel>
       );
     }
@@ -404,7 +384,7 @@ export default function RequestDataPanel(props: RequestPanelProps) {
             {buildDataTabs()}
           </TabList>
         </Box>
-        <div>
+        {/* <div>
           <Tooltip title='Copy To Clipboard'>
             <IconButton
               onClick={handleCopyClick}
@@ -421,7 +401,7 @@ export default function RequestDataPanel(props: RequestPanelProps) {
               </IconButton>
             </Tooltip>
           }
-        </div>
+        </div> */}
         { (props.processRowToggle !== undefined) &&
           <FormControlLabel
             control={

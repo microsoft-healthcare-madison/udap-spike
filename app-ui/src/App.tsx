@@ -40,8 +40,6 @@ export default function App() {
     severity: AlertColor;
   }
 
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-
   const [alertInfo, setAlertInfo] = useState<AlertDialogInfo>({
     isOpen: false,
     content: '',
@@ -66,21 +64,24 @@ export default function App() {
 
   const theme = createTheme({
     palette: {
-      mode: darkMode ? 'dark' : 'light',
+      mode: commonProps.darkModeEnabled ? 'dark' : 'light',
     },
   });
 
   function toggleVisualMode() {
+    const mode:boolean = !commonProps.darkModeEnabled;
+
     if (StorageHelper.isLocalStorageAvailable) {
-      localStorage.setItem('visualModeDark', (!darkMode).toString());
+      localStorage.setItem('visualModeDark', (mode).toString());
     } else {
-      sessionStorage.setItem('visualModeDark', (!darkMode).toString());
+      sessionStorage.setItem('visualModeDark', (mode).toString());
     }
 
-    setDarkMode(!darkMode);
+    setCommonProps({...commonProps, darkModeEnabled: mode});
   }
 
   function copyToClipboard(content: string, hint?: string) {
+    console.log('Copy text', content);
     const success = CopyHelper.copyToClipboard(content);
 
     if ((success) && (hint)) {
@@ -111,9 +112,9 @@ export default function App() {
 
   function loadSettings() {
     if (localStorage.getItem('visualModeDark') === 'true') {
-      setDarkMode(true);
+      setCommonProps({...commonProps, darkModeEnabled: true});
     } else if (sessionStorage.getItem('visualModeDark') === 'true') {
-      setDarkMode(true);
+      setCommonProps({...commonProps, darkModeEnabled: true});
     }
   }
 

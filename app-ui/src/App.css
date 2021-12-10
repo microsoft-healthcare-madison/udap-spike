@@ -49,14 +49,14 @@
 .code-tab {
   overflow: auto !important;
   max-height: 510px;
-  max-width: calc(100vw - 250px);
+  max-width: 100vw;
   min-width: 50vw;
 }
 
 .code-md-tab-light {
   overflow: auto !important;
   max-height: 510px;
-  max-width: calc(100vw - 250px);
+  max-width: 100vw;
   min-width: 50vw;
   background-color: #ffffff;
 }
@@ -78,7 +78,7 @@
 .code-md-tab-dark {
   overflow: auto !important;
   max-height: 510px;
-  max-width: calc(100vw - 250px);
+  max-width: 100vw;
   min-width: 50vw;
   background-color: #1e1e1e;
 }
