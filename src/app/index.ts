@@ -87,7 +87,6 @@ async function initialize() {
     appEndorsement = appResp.value.endorsement;
   } catch (err) {
     console.log(err);
-    createAppAtEndorser();
   }
 
   console.log('app api Initialized!');
