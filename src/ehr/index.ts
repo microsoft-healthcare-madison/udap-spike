@@ -459,7 +459,11 @@ router.post("/api/oauth/token", async (req, res, err) => {
     h: jose.JWTHeaderParameters,
     t: jose.FlattenedJWSInput
   ): Promise<KeyLike | Uint8Array> => {
-    return jose.importJWK(jwksKeys.filter((k) => k.kid === h.kid)[0] as any);
+    let keyToUse = jwksKeys[0]
+    if (jwksKeys.length > 1 || (keyToUse.kid && h.kid && keyToUse.kid !== h.kid)) {
+      keyToUse = jwksKeys.filter((k) => k.kid === h.kid)[0] as any
+    }
+    return jose.importJWK(keyToUse);
   };
 
   const clientAuthenticated = await jose.jwtVerify(
