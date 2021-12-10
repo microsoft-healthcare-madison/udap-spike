@@ -123,7 +123,7 @@ function App() {
     const f = document.createElement("form");
     f.action = `/ehr/api/authorization/${session}/approve`;
     f.method = "POST";
-    f.target = "_blank";
+    // f.target = "_blank";
     document.body.appendChild(f);
     f.submit();
   };

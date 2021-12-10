@@ -60,7 +60,7 @@ export default function MainPage() {
 
   const [authTimeout, setAuthTimeout] = useState<number>(-1);
 
-  const [appId, setAppId] = useState<string>(_appId);
+  const [clientId, setClientId] = useState<string>(_appId);
   const [aud, setAud] = useState<string>(_fhirServer);
   const [requestedScopes, setRequestedScopes] = useState<LaunchScope>(new LaunchScope());
   const [profile, setProfile] = useState<string>('');
@@ -69,6 +69,7 @@ export default function MainPage() {
 
   const [instanceId, setInstanceId] = useState<string>()
   const [keyPair, setKeyPair] = useState<jose.GenerateKeyPairResult>();
+  const [publicKeyId, setPublicKeyId] = useState<string>('');
 
   const smartConfigCardInfo:DataCardInfo = {
     id: 'smart-config-card',
@@ -85,7 +86,6 @@ export default function MainPage() {
     optional: false,
   }
   const [controllerCardData, setControllerCardData] = useState<SingleRequestData[]>([]);
-
 
   const udapCardInfo:DataCardInfo = {
     id: 'udap-info-card',
@@ -118,7 +118,7 @@ export default function MainPage() {
     var url = new URL(window.location.href);
 
     getFromQueryOrStorage(url, 'aud', setAud, true);
-    getFromQueryOrStorage(url, 'appId', setAppId, true);
+    getFromQueryOrStorage(url, 'appId', setClientId, true);
     getFromQueryOrStorage(url, 'instanceId', setInstanceId, true);
 
     if (getFromQueryOrStorage(url, 'code')) {
@@ -299,14 +299,17 @@ export default function MainPage() {
     let url:string = '/app/api/registerWithEHR';
 
     try {
-      const keyResult = await jose.generateKeyPair('RS256');
+      // TODO: do not actually want these extractable, artifact of current build of client-js
+      const keyResult = await jose.generateKeyPair('RS384', {extractable: true});
       setKeyPair(keyResult);
   
-      let publicJWK = await jose.exportJWK(keyResult.publicKey);
+      let publicJWK = await jose.exportJWK(keyResult.publicKey,);
+      let keyId = await jose.calculateJwkThumbprint(publicJWK, 'sha256');
+      setPublicKeyId(keyId);
   
       let req: ControllerUdapRegistrationRequest = {
         fhirUrl: aud,
-        keys: [publicJWK],
+        keys: [ {...publicJWK, kid: keyId, alg: 'RS384'}],
       };
 
       let headers:Headers = new Headers();
@@ -324,6 +327,10 @@ export default function MainPage() {
       console.log('body', body);
 
       let typed:any = await JSON.parse(body);
+
+      if (typed.client_id) {
+        setClientId(typed.client_id);
+      }
 
       let data:SingleRequestData = {
         id: `udap-${udapCardData.length}`,
@@ -475,7 +482,7 @@ export default function MainPage() {
     }
   }
 
-  function startAuth() {
+  async function startAuth() {
     if (!aud) {
       showToastMessage('Standalone launch requires an Audience!', IconNames.ERROR);
       return;
@@ -483,12 +490,19 @@ export default function MainPage() {
 
     let scopeString:string = requestedScopes.getScopes();
 
+    let privateJWK:jose.JWK = await jose.exportJWK(keyPair?.privateKey!);
+
     FHIR.oauth2.authorize({
-      client_id: appId,
+      client_id: clientId,
       scope: scopeString,
       iss: aud,
       redirect_uri: process.env.REACT_APP_REDIRECT_URL || undefined,
       pkceMode: 'ifSupported',
+      clientPrivateJwk: {...privateJWK, 
+        kid: publicKeyId,
+        kty: 'RSA',
+        alg: 'RS384',
+      },
     });
   }
 
@@ -756,7 +770,7 @@ export default function MainPage() {
     let request:string =
       '| Name | Value |\n' +
       '|-------|-------|\n' +
-      `|client id|${appId}|\n` +
+      `|client id|${clientId}|\n` +
       `|scopes|${scopeString}|\n` +
       `|aud|${currentAud}|\n` +
       `|PKCE:Challenge|${client.state.codeChallenge}|\n` +
@@ -776,7 +790,7 @@ export default function MainPage() {
 
   function setAppIdAndSave(value:string) {
     sessionStorage.setItem('appId', value);
-    setAppId(value);
+    setClientId(value);
   }
 
   function setScopesAndSave(scopes:LaunchScope) {
@@ -819,7 +833,7 @@ export default function MainPage() {
       isUiDark: uiDark,
       aud: aud,
       setAud: setAudAndSave,
-      appId: appId,
+      appId: clientId,
       setAppId: setAppIdAndSave,
       profile: profile,
       fhirUser: fhirUser,
@@ -892,7 +906,7 @@ export default function MainPage() {
     isUiDark: uiDark,
     aud: aud,
     setAud: setAudAndSave,
-    appId: appId,
+    appId: clientId,
     setAppId: setAppIdAndSave,
     profile: profile,
     fhirUser: fhirUser,
