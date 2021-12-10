@@ -30,6 +30,8 @@
 
 * `certification_name` is 0..1 but `certification_uris` is 0..* -- how does one name apply to >1 certification? There should be a data structure with {name, uri, logo} that repeats.
 
+* SMART client library `own-js` branch should not require a private JWK -- rather, a function that can sign with a private JWK, to allow for non-extractable keys
+
 
 ### Build and run in Docker
 
