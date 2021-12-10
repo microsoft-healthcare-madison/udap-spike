@@ -2,61 +2,38 @@
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.bp3-card {
+  margin: 10px;
+  /* width: 100%; */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.bp3-switch {
+  margin: 5px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.bp3-button {
+  margin: 5px;
+}
+
+#main-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: calc(100vw - 20px);
 }
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.MuiTextField-root {
-  margin-top: 1em !important;
-}
-
-.MuiButton-root {
-  margin: 1em !important;
-}
-
 
 .code-tab {
   overflow: auto !important;
   max-height: 510px;
-  max-width: 100vw;
+  max-width: calc(100vw - 250px);
   min-width: 50vw;
 }
 
 .code-md-tab-light {
   overflow: auto !important;
   max-height: 510px;
-  max-width: 100vw;
+  max-width: calc(100vw - 250px);
   min-width: 50vw;
   background-color: #ffffff;
 }
@@ -78,7 +55,7 @@
 .code-md-tab-dark {
   overflow: auto !important;
   max-height: 510px;
-  max-width: 100vw;
+  max-width: calc(100vw - 250px);
   min-width: 50vw;
   background-color: #1e1e1e;
 }
@@ -95,4 +72,33 @@
 
 .code-md-tab-dark table tr:nth-child(2n) {
   background: #1e1e1e;
+}
+
+.centered {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+}
+
+.nav-logo {
+  width: 32px;
+  margin-right: 4px;
+}
+
+.fixed-checkbox {
+  width: 300px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.narrow-fixed-checkbox {
+  width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: top;
 }

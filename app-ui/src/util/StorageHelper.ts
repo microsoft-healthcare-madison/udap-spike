@@ -31,6 +31,7 @@ export class StorageHelper {
     }
   }
 
-  // check once
+  // **** check once ****
+  
   static isLocalStorageAvailable:boolean = (StorageHelper.checkLocalStorageAvailable() === true);
 }

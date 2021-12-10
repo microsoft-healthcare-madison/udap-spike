@@ -1,25 +1,10 @@
 import React, {useState, useEffect} from 'react';
 
 import {
-  Button, 
-  Box,
-  Tabs,
-  Tab,
-  Tooltip, 
-  Icon, 
-  Switch, 
-  IconButton, 
-  FormControlLabel, 
-  Typography,
-} from '@mui/material';
-
-import {
-  TabContext,
-  TabList,
-  TabPanel,
-} from '@mui/lab'
-
-import { CommonComponentProps } from '../models/CommonComponentProps';
+  Button, Tabs, Tab, Tooltip, TabId, Icon, Switch, 
+} from '@blueprintjs/core';
+import { CommonProps } from '../models/CommonProps';
+import { IconNames, IconName } from '@blueprintjs/icons';
 import { SingleRequestData, RenderDataAsTypes } from '../models/RequestData';
 
 // import SyntaxHighlighter from 'react-syntax-highlighter';
@@ -33,21 +18,8 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'
 
-import {
-  Remove as NoTypeIcon,
-  Code as JsonIcon,
-  Error as ErrorIcon,
-  LocalFireDepartment as FhirIcon,
-  TextFormat as TextIcon,
-  Info as InfoIcon,
-  ContentCopy as CopyIcon,
-  Delete as DeleteIcon,
-  Language as RequestIcon,
-} from '@mui/icons-material'
-
-
 export interface RequestPanelProps {
-  common: CommonComponentProps,
+  common: CommonProps,
   data: SingleRequestData[],
   busy?: boolean,
   processRowDelete?: ((index: number) => void),
@@ -79,20 +51,19 @@ export default function RequestDataPanel(props: RequestPanelProps) {
     if (selectedTabId !== '') {
       setDisplayedTabId(selectedTabId);
     }
-    
+      
     if (selectedTabId === '') {
-      setDisplayedTabId('0');
-      // if (props.data[dataRowIndex].info) {
-      //   setDisplayedTabId('info');
-      // } else if (props.data[dataRowIndex].responseData) {
-      //   setDisplayedTabId('response_data');
-      // } else if (props.data[dataRowIndex].outcome) {
-      //   setDisplayedTabId('outcome');
-      // } else if (props.data[dataRowIndex].requestData) {
-      //   setDisplayedTabId('request_data');
-      // } else if (props.data[dataRowIndex].requestUrl) {
-      //   setDisplayedTabId('request_url');
-      // }
+      if (props.data[dataRowIndex].info) {
+        setDisplayedTabId('info');
+      } else if (props.data[dataRowIndex].responseData) {
+        setDisplayedTabId('response_data');
+      } else if (props.data[dataRowIndex].outcome) {
+        setDisplayedTabId('outcome');
+      } else if (props.data[dataRowIndex].requestData) {
+        setDisplayedTabId('request_data');
+      } else if (props.data[dataRowIndex].requestUrl) {
+        setDisplayedTabId('request_url');
+      }
     }
   }, [props.data, selectedTabId, displayedTabId, dataRowIndex]);
 
@@ -100,24 +71,23 @@ export default function RequestDataPanel(props: RequestPanelProps) {
     return(null);
   }
 
-  function iconForType(dataType: RenderDataAsTypes|undefined):JSX.Element {
+  function iconNameForType(dataType: RenderDataAsTypes|undefined) {
     switch (dataType)
     {
-      case RenderDataAsTypes.None:  return <NoTypeIcon/>;
-      case RenderDataAsTypes.FHIR:  return <FhirIcon/>;
-      case RenderDataAsTypes.JSON:  return <JsonIcon/>;
-      case RenderDataAsTypes.Error: return <ErrorIcon/>;
-      case RenderDataAsTypes.Text:  return <TextIcon/>;
-      default:                      return <InfoIcon/>;
+      case RenderDataAsTypes.None: return IconNames.MINUS; //break;
+      case RenderDataAsTypes.FHIR: return IconNames.FLAME; //break;
+      case RenderDataAsTypes.JSON: return IconNames.CODE; //break;
+      case RenderDataAsTypes.Error: return IconNames.ERROR; //break;
+      case RenderDataAsTypes.Text: return IconNames.ALIGN_LEFT; //break;
+      default: return IconNames.INFO_SIGN; //break;
     }
   }
 
-  function handleTabChange(event: React.SyntheticEvent, navbarTabId: string) {
-    setSelectedTabId(navbarTabId);
+  function handleTabChange(navbarTabId: TabId) {
+    setSelectedTabId(navbarTabId.toString());
   }
 
   function handleCopyClick() {
-    console.log(`Request to copy from ${displayedTabId}`);
     switch (displayedTabId)
     {
       case 'request_url':
@@ -165,11 +135,12 @@ export default function RequestDataPanel(props: RequestPanelProps) {
     props.tabButtonHandler!(dataRowIndex);
   }
 
-  function buildTabPanel(
+  function buildTab(
     key:string,
+    name:string,
     content:string,
-    index:string,
-    renderAs?:RenderDataAsTypes):JSX.Element 
+    renderAs?:RenderDataAsTypes,
+    iconName?:IconName):JSX.Element 
     {
     let lang:string;
     switch (renderAs) {
@@ -199,35 +170,40 @@ export default function RequestDataPanel(props: RequestPanelProps) {
     if ((renderAs === RenderDataAsTypes.Markdown) || 
         (renderAs === RenderDataAsTypes.HTML)) {
       return (
-        <TabPanel
+        <Tab
           key={key}
           id={key}
-          value={index}
+          panel={
+            <ReactMarkdown
+              className={props.common.isUiDark ? 'code-md-tab-dark' : 'code-md-tab-light'}
+              skipHtml={true}
+              children={content}
+              remarkPlugins={[remarkGfm]}
+                />
+            }
           >
-          <ReactMarkdown
-            className={props.common.darkModeEnabled ? 'code-md-tab-dark' : 'code-md-tab-light'}
-            skipHtml={false}
-            children={content}
-            remarkPlugins={[remarkGfm]}
-            />
-        </TabPanel>
+        <Icon icon={iconName ?? IconNames.INFO_SIGN} /> {name}
+        </Tab>
       );
     }
 
     return (
-      <TabPanel
+      <Tab
         key={key}
         id={key}
-        value={index}
+        panel={
+          <SyntaxHighlighter
+            className='code-tab'
+            language={lang}
+            // style={props.common.isUiDark ? atomOneDark : atomOneLight}
+            style={props.common.isUiDark ? highlightDark : highlightLight}
+            >
+            {content}
+          </SyntaxHighlighter>
+          }
         >
-        <SyntaxHighlighter
-          className='code-tab'
-          language={lang}
-          style={props.common.darkModeEnabled ? highlightDark : highlightLight}
-          >
-          {content}
-        </SyntaxHighlighter>
-      </TabPanel>
+        <Icon icon={iconName ?? IconNames.INFO_SIGN} /> {name}
+      </Tab>
     );
   }
 
@@ -235,138 +211,69 @@ export default function RequestDataPanel(props: RequestPanelProps) {
     return name.replace(' ', '_').toLowerCase();
   }
 
-  function buildDataTabPanels() {
-    let tabs:JSX.Element[] = [];
-
-    if (props.data[dataRowIndex].requestUrl) {
-      tabs.push(
-          buildTabPanel(
-            'request_url',
-            props.data[dataRowIndex].requestUrl!,
-            tabs.length.toString(),
-            RenderDataAsTypes.Text));
-    }
-
-    if (props.data[dataRowIndex].requestData) {
-      tabs.push(
-          buildTabPanel(
-            'request_data',
-            props.data[dataRowIndex].requestData!,
-            tabs.length.toString(),
-            props.data[dataRowIndex].requestDataType ?? RenderDataAsTypes.JSON));
-    }
-
-    if (props.data[dataRowIndex].outcome) {
-      tabs.push(
-          buildTabPanel(
-            'outcome',
-            props.data[dataRowIndex].outcome!,
-            tabs.length.toString(),
-            RenderDataAsTypes.FHIR));
-    }
-
-    if (props.data[dataRowIndex].responseData) {
-      tabs.push(
-          buildTabPanel(
-            'response_data',
-            props.data[dataRowIndex].responseData!,
-            tabs.length.toString(),
-            props.data[dataRowIndex].responseDataType ?? RenderDataAsTypes.Text));
-    }
-
-    if (props.data[dataRowIndex].info) {
-      tabs.push(
-          buildTabPanel(
-            'info',
-            props.data[dataRowIndex].info!,
-            tabs.length.toString(),
-            props.data[dataRowIndex].infoDataType ?? RenderDataAsTypes.JSON));
-    }
-
-    if (props.data[dataRowIndex].extended) {
-      props.data[dataRowIndex].extended!.forEach((value:string, name:string) => {
-        let key:string = nameToKey(name);
-        tabs.push(
-          buildTabPanel(
-            key,
-            value,
-            tabs.length.toString(),
-            props.data[dataRowIndex].extendedDataType ?? RenderDataAsTypes.Text));
-      });
-    }
-
-    return tabs;
-  }
-
   function buildDataTabs() {
     let tabs:JSX.Element[] = [];
 
     if (props.data[dataRowIndex].requestUrl) {
       tabs.push(
-        <Tab
-          key='request_url'
-          value={tabs.length.toString()}
-          label='Request URL'
-          icon={<RequestIcon/>}
-          iconPosition='start'
-          />);
+          buildTab(
+            'request_url', 
+            'Request URL',
+            props.data[dataRowIndex].requestUrl!,
+            RenderDataAsTypes.Text,
+            IconNames.GLOBE_NETWORK));
     }
 
     if (props.data[dataRowIndex].requestData) {
       tabs.push(
-        <Tab
-          key='request_data'
-          value={tabs.length.toString()}
-          label='Request Data'
-          icon={iconForType(props.data[dataRowIndex].requestDataType ?? RenderDataAsTypes.JSON)}
-          iconPosition='start'
-          />);
+          buildTab(
+            'request_data',
+            'Request Data',
+            props.data[dataRowIndex].requestData!,
+            props.data[dataRowIndex].requestDataType ?? RenderDataAsTypes.JSON,
+            iconNameForType(props.data[dataRowIndex].requestDataType ?? RenderDataAsTypes.JSON)));
     }
 
     if (props.data[dataRowIndex].outcome) {
       tabs.push(
-        <Tab
-          key='outcome'
-          value={tabs.length.toString()}
-          label='Outcome'
-          icon={<FhirIcon/>}
-          iconPosition='start'
-          />);
+          buildTab(
+            'outcome',
+            'Outcome',
+            props.data[dataRowIndex].outcome!,
+            RenderDataAsTypes.FHIR,
+            IconNames.FLAME));
     }
 
     if (props.data[dataRowIndex].responseData) {
       tabs.push(
-        <Tab
-          key='response_data'
-          value={tabs.length.toString()}
-          label='Response Data'
-          icon={iconForType(props.data[dataRowIndex].responseDataType ?? RenderDataAsTypes.Text)}
-          iconPosition='start'
-          />);
+          buildTab(
+            'response_data',
+            'Response Data',
+            props.data[dataRowIndex].responseData!,
+            props.data[dataRowIndex].responseDataType ?? RenderDataAsTypes.Text,
+            iconNameForType(props.data[dataRowIndex].responseDataType ?? RenderDataAsTypes.Text)));
     }
 
     if (props.data[dataRowIndex].info) {
       tabs.push(
-        <Tab
-          key='info'
-          value={tabs.length.toString()}
-          label='Info'
-          icon={iconForType(props.data[dataRowIndex].requestDataType ?? RenderDataAsTypes.JSON)}
-          iconPosition='start'
-          />);
+          buildTab(
+            'info',
+            'Info',
+            props.data[dataRowIndex].info!,
+            props.data[dataRowIndex].infoDataType ?? RenderDataAsTypes.JSON,
+            IconNames.INFO_SIGN));
     }
 
     if (props.data[dataRowIndex].extended) {
       props.data[dataRowIndex].extended!.forEach((value:string, name:string) => {
         let key:string = nameToKey(name);
         tabs.push(
-          <Tab
-            key={key}
-            value={tabs.length.toString()}
-            label={name}
-            icon={iconForType(props.data[dataRowIndex].extendedDataType ?? RenderDataAsTypes.Text)}
-            iconPosition='start'
-            />);
+          buildTab(
+            key,
+            name,
+            value,
+            props.data[dataRowIndex].extendedDataType ?? RenderDataAsTypes.Text,
+            iconNameForType(props.data[dataRowIndex].extendedDataType)));
       });
     }
 
@@ -374,57 +281,52 @@ export default function RequestDataPanel(props: RequestPanelProps) {
   }
 
   return(
-    <Box>
-      <TabContext
-        value={displayedTabId}
-        // orientation='vertical'
-        >
-        <Box>
-          <TabList onChange={handleTabChange}>
-            {buildDataTabs()}
-          </TabList>
-        </Box>
-        {/* <div>
-          <Tooltip title='Copy To Clipboard'>
-            <IconButton
-              onClick={handleCopyClick}
-              >
-              <CopyIcon/>
-            </IconButton>
-          </Tooltip>
-          { (props.processRowDelete !== undefined) &&
-            <Tooltip title='Delete'>
-              <IconButton
-                onClick={handleDeleteClick}
-                >
-                <DeleteIcon/>
-              </IconButton>
-            </Tooltip>
-          }
-        </div> */}
-        { (props.processRowToggle !== undefined) &&
-          <FormControlLabel
-            control={
-              <Switch 
-                disabled={props.busy}
-                checked={props.data[dataRowIndex].enabled}
-                onChange={handleToggle}
-                />}
-            label='Enabled'
+    <Tabs
+      animate={true}
+      vertical={true}
+      selectedTabId={displayedTabId}
+      onChange={handleTabChange}
+      >
+      <div>
+        <Tooltip content='Copy To Clipboard'>
+          <Button 
+            icon={IconNames.DUPLICATE} 
+            minimal 
+            style={{marginLeft:5, marginRight:5, marginTop:10}}
+            onClick={handleCopyClick}
             />
+        </Tooltip>
+        { (props.processRowDelete !== undefined) &&
+          <Tooltip content='Delete'>
+            <Button 
+              icon={IconNames.DELETE} 
+              minimal 
+              style={{marginLeft:5, marginRight:5, marginTop:10}}
+              onClick={handleDeleteClick}
+              />
+          </Tooltip>
         }
-        { ((props.tabButtonText !== undefined) && (props.tabButtonHandler !== undefined)) &&
-          <div>
-            <Button
-              disabled={props.busy}
-              onClick={handleTabButtonClick}
-              >
-              {props.tabButtonText!}
-            </Button>
-          </div>
-        }
-        {buildDataTabPanels()}
-      </TabContext>
-    </Box>
+      </div>
+      { (props.processRowToggle !== undefined) &&
+        <div>
+          <Switch
+            disabled={props.busy}
+            checked={props.data[dataRowIndex].enabled}
+            label='Enabled' 
+            onChange={handleToggle}
+            />
+        </div>
+      }
+      { ((props.tabButtonText !== undefined) && (props.tabButtonHandler !== undefined)) &&
+        <div>
+          <Button
+            disabled={props.busy}
+            text={props.tabButtonText!}
+            onClick={handleTabButtonClick}
+            />
+        </div>
+      }
+      {buildDataTabs()}
+    </Tabs>
   );
 }

@@ -10,4 +10,9 @@ export interface SmartConfiguration {
   scopes_supported: string[];
   response_types_supported: string[];
   capabilities: string[];
+
+  udap_versions_supported: string[];
+  udap_certifications_required: string[];
+  grant_types_supported: string[];
+  registration_endpoint: string;
 }

@@ -1,32 +1,18 @@
 import * as React from 'react';
 
 import { 
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Card,
-  Divider,
+  H5, H6, 
   Icon,
-  CircularProgress,
+  Intent,
+  Spinner,
   Button,
-  IconButton,
-  Typography,
-  Select,
-  SelectChangeEvent,
-} from '@mui/material';
+  HTMLSelect,
+} from '@blueprintjs/core';
 
-import {
-  Remove as MinusIcon,
-  Done as CompleteIcon,
-  ArrowRightAlt as AvailableIcon,
-  DoNotDisturb as DisabledIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-} from '@mui/icons-material'
-
-
+import {IconNames} from '@blueprintjs/icons';
 import { DataCardInfo } from '../models/DataCardInfo';
-import { CommonComponentProps } from '../models/CommonComponentProps';
+import { CommonProps } from '../models/CommonProps';
 import { SingleRequestData } from '../models/RequestData';
 import RequestDataPanel from './RequestDataPanel';
 import { DataCardStatus } from '../models/DataCardStatus';
@@ -35,7 +21,7 @@ export interface DataCardProps {
   info: DataCardInfo,
   status: DataCardStatus
   data: SingleRequestData[],
-  common: CommonComponentProps,
+  common: CommonProps,
   children?: React.ReactNode,
   processRowDelete?: ((index: number) => void),
   processRowToggle?: ((index: number) => void),
@@ -55,55 +41,59 @@ export default function DataCard(props: DataCardProps) {
   }
 
   /** Function to get an appropriate icon for this card */
-  function iconForCard():JSX.Element {
+  function iconForCard() {
     if (props.status.busy) {
-      return(<CircularProgress />);
+      return(<Spinner size={Spinner.SIZE_SMALL} />);
     }
     if (!props.info.stepNumber) {
-      return(<MinusIcon />);
+      return(<Icon icon={IconNames.MINUS} iconSize={Icon.SIZE_LARGE} />);
     }
     if (props.status.complete) {
-      return(<CompleteIcon />);
+      return(<Icon icon={IconNames.TICK} intent={Intent.SUCCESS} iconSize={Icon.SIZE_LARGE} />);
     }
     if (props.status.available) {
-      return(<AvailableIcon />);
+      return(<Icon icon={IconNames.ARROW_RIGHT} intent={Intent.PRIMARY} iconSize={Icon.SIZE_LARGE} />);
     }
-    return(<DisabledIcon />);
+    return(<Icon icon={IconNames.DISABLE} intent={Intent.WARNING} iconSize={Icon.SIZE_STANDARD} />);
   }
 
   /** Process HTML events for the data index select box */
-	function handleDataIndexChange(event:SelectChangeEvent) {
-		setSelectedDataIndex(parseInt(event.target.value));
+	function handleDataIndexChange(event: React.FormEvent<HTMLSelectElement>) {
+		setSelectedDataIndex(parseInt(event.currentTarget.value));
   }
 
+  // **** return our component ****
+
   return (
-    <Accordion
-      key={props.info.id}
-      >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon/>}
-        >
-        <Typography variant='h5'>
-          {iconForCard()}
-          {props.info.optional ? '(Optional) ':''}{props.info.heading}
-          { ((showContent) && (props.data.length > 1)) &&
-            <Select
-              id='index-selector'
-              value={selectedDataIndex.toString()}
-              onChange={handleDataIndexChange}
-              style={{margin: 5}}
-              >
-              <option value={-1}>Latest</option>
-              { props.data.map((value, index) => (
-                <option key={index} value={index}>{value.name}</option> 
-                ))}
-            </Select>
-          }
-        </Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        { (props.info.description !== '') &&
-            <Typography variant='h6'>{props.info.description}</Typography>
+    <Card key={props.info.id}>
+      <Button
+        onClick={handleToggleCardContentClick}
+        minimal={true}
+        style={{float: 'right'}}
+        icon={showContent ? IconNames.CHEVRON_DOWN : IconNames.CHEVRON_RIGHT}
+        />
+      <div style={{float:'left', width: '20px', marginLeft: '5px', marginRight: '10px'}}>
+        {iconForCard()}
+      </div>
+      <H5>{props.info.optional ? '(Optional) ':''}{props.info.heading}
+        { ((showContent) && (props.data.length > 1)) &&
+        <HTMLSelect
+          id='index-selector'
+          value={selectedDataIndex}
+          onChange={handleDataIndexChange}
+          style={{margin: 5}}
+          >
+          <option value={-1}>Latest</option>
+          { props.data.map((value, index) => (
+            <option key={index} value={index}>{value.name}</option> 
+            ))}
+        </HTMLSelect>
+        }
+      </H5>
+      { showContent &&
+        <div>
+          { (props.info.description !== '') &&
+            <H6>{props.info.description}</H6>
           }
           { ((props.renderChildrenAfter !== true) && (props.children !== undefined)) &&
             props.children
@@ -127,24 +117,9 @@ export default function DataCard(props: DataCardProps) {
               {props.children}
             </>
           }
-        </AccordionDetails>
-    </Accordion>
-    // <Box key={props.info.id}>
-    //   <IconButton
-    //     onClick={handleToggleCardContentClick}
-    //     sx={{float: 'right'}}
-    //     >
-    //     {showContent ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-    //   </IconButton>
-    //   <div style={{float:'left', width: '20px', marginLeft: '5px', marginRight: '10px'}}>
-    //     {iconForCard()}
-    //   </div>
-    //   { showContent &&
-    //     <div>
-
-    //     </div>
-    //   }
-    // </Box>
+        </div>
+      }
+    </Card>
   );
 }
 

@@ -5,6 +5,18 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.body-dark {
+  background-color: #202B33;
+}
+
+.body-light {
+  background-color: #D8E1E8;
 }
 
 code {
