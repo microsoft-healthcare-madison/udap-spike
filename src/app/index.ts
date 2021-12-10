@@ -42,6 +42,7 @@ const controllerAppData = {
   'client_name': config.clientName,
   'redirect_uris': [
     `${config.appUrl}/oauth-redirect`,
+    `${config.appUrl}/static/`,
     'http://localhost:3002/',
   ]
 }

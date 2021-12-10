@@ -38,7 +38,10 @@
     docker build -t udap .
     docker network create udap
     docker run   --network=udap --name hapi -p 8080:8080 hapiproject/hapi:latest
-    docker run -e ENDORSER_FHIR_BASE=http://hapi:8080/fhir --network=udap  --rm -it  -p 3000:3000  udap
+    docker run \
+      -e AUTHORIZE_UI="http://localhost:3000/ehr/static" \
+      -e ENDORSER_FHIR_BASE="http://hapi:8080/fhir" \
+      --network=udap  --rm -it  -p 3000:3000  udap
 
 ### Building EHR UI
 
